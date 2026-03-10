@@ -113,7 +113,15 @@ theorem lower_triangular_not_symmetric {a : ℝ} (ha : a ≠ 0) :
     variable has already equilibrated, so ∂F_i/∂F_j = 0. The Jacobian
     is therefore lower-triangular. The non-gradient structure follows:
     a lower-triangular matrix with nonzero subdiagonal entries cannot
-    be symmetrized (proved for 2×2 as `lower_triangular_not_symmetric`). -/
+    be symmetrized (proved for 2×2 as `lower_triangular_not_symmetric`).
+
+    **Prediction.** The I-O Jacobian is approximately lower-triangular when
+    sectors are ordered by adjustment speed.
+    *Observable*: BEA I-O direct requirements matrix reordered by FRED IP
+    adjustment half-life; upper-triangular entries are smaller than
+    lower-triangular entries.
+    *Test*: ratio of upper-triangle to lower-triangle Frobenius norm < 0.5
+    under timescale ordering; permutation test for significance. -/
 theorem jacobian_lower_triangular (e : HierarchicalCESEconomy N) :
     True := trivial
 

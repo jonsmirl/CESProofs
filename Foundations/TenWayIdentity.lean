@@ -86,7 +86,13 @@ theorem shareFunction_nonneg {w : Fin J → ℝ}
     - CES demand system HOD(0) (Deaton, Nobel 2015)
     - The ratio test in Gibbs statistical mechanics
 
-    All are the SAME theorem because all are shareFunction. -/
+    All are the SAME theorem because all are shareFunction.
+
+    **Prediction.** IIA violations signal departure from the CES regime.
+    *Observable*: market share ratio s_j/s_k stability after competitor exit
+    (Census BDS data); CES-compatible industries show no structural break
+    in the ratio, while non-CES industries show significant ratio shifts.
+    *Test*: Chow test on s_j/s_k time series around exit events. -/
 theorem shareFunction_iia [NeZero J] {w : Fin J → ℝ}
     (hw : ∀ j, 0 < w j) (j k : Fin J) :
     shareFunction w j / shareFunction w k = w j / w k := by

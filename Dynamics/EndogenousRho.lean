@@ -37,7 +37,14 @@ variable {N : ℕ}
     and the SOC $\partial^2/\partial\rho^2 < 0$ give
     $d\rho^*/dT = -(\partial^2 K_{\mathrm{eff}}/\partial\rho\,\partial T)/(\text{SOC}) > 0$.
     Higher friction favors more substitutable (higher $\rho$) inputs because
-    complementarity benefits degrade with $T$. -/
+    complementarity benefits degrade with $T$.
+
+    **Prediction.** ρ shifts via four channels: learning, selection, entry, regulation.
+    *Observable*: industry-level ρ estimates from NBER-CES panel; changes in ρ
+    should correlate with (1) R&D intensity (learning), (2) firm exit rates
+    (selection), (3) new establishment counts (entry), (4) regulatory changes.
+    *Test*: panel regression of Δρ on four channel proxies; all four
+    coefficients significant with predicted signs. -/
 theorem optimal_rho_increases_with_T (J : ℕ) (hJ : 2 ≤ J) :
     -- d(rho*)/dT > 0 via the implicit function theorem
     -- Higher friction favors less complementary (more substitutable) inputs
@@ -206,7 +213,15 @@ theorem rhoT_limit_cycle :
     ($\dot{\rho} > 0, \dot{T} < 0$): standardization continues while institutional
     learning reduces $T$. Maturity ($\dot{\rho} < 0, \dot{T} < 0$): complementarity
     deepens as $T$ falls. Turning point ($\dot{\rho} < 0, \dot{T} > 0$): Minsky
-    feedback raises $T$ while $\rho$ still falling. -/
+    feedback raises $T$ while $\rho$ still falling.
+
+    **Prediction.** (ρ, T) traces a four-phase Perez limit cycle.
+    *Observable*: rolling estimates of ρ (from NBER-CES) and T (from NFCI/credit
+    spreads) over 40-60 year windows; trajectory should trace counterclockwise
+    loop through four quadrants matching Installation → Deployment → Maturity →
+    Turning Point sequence.
+    *Test*: phase-plane plot of (ρ̂, T̂); quadrant transition sequence test
+    against canonical Perez chronology (1971-2008 wave). -/
 theorem perez_phases :
     -- The four phases correspond to the four quadrants
     -- of the (d(rho)/dt, dT/dt) sign diagram

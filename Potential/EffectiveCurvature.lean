@@ -46,7 +46,13 @@ variable {J : ℕ}
     contributes T·q·J^{2-q} to the effective Hessian eigenvalue,
     reducing the curvature from -(1-ρ)/(Jc²) to -(1-ρ)/(Jc²) + T·ρ·J^{2-ρ}/c².
 
-    Partially proved: algebraic structure verified; Taylor expansion axiomatized. -/
+    Partially proved: algebraic structure verified; Taylor expansion axiomatized.
+
+    **Prediction.** K_eff degrades with rising information friction.
+    *Observable*: measure T via credit spreads (BAA-AAA) or NFCI; cross-sector
+    output covariance should decrease with NFCI, with acceleration when
+    NFCI > 80th percentile (approaching T*).
+    *Predicted sign*: negative relationship, nonlinear acceleration near T*. -/
 theorem effectiveCurvature_taylor (J : ℕ) (ρ T c : ℝ) (hρ : ρ < 1)
     (hT : 0 < T) (hc : 0 < c) (hJ : 2 ≤ J) :
     -- The effective Hessian eigenvalue on 1⊥ is:
@@ -150,7 +156,13 @@ theorem sensitivity_ratio {K : ℝ} (hK_pos : 0 < K) (hK_lt : K < 1) :
     Here we prove the K > 0 half; the Fisher info = 0 half is in
     InformationGeometry.escort_fisher_zero_at_symmetry (cannot be imported
     here due to the Paper2 → Paper3 → Paper4 → InformationGeometry chain).
-    The composite theorem is stated in InformationGeometry.dual_curvature_principle. -/
+    The composite theorem is stated in InformationGeometry.dual_curvature_principle.
+
+    **Prediction.** Eigenvalue ratio λ₂/λ₁ of sector correlation matrix
+    serves as early warning indicator.
+    *Observable*: rolling eigenvalue ratio from FRED sectoral IP indices;
+    ratio decline below 0.2 leads NBER recession dates by 6-18 months.
+    *Test*: event study of eigenvalue ratio around NBER turning points. -/
 theorem information_shadow (hJ : 2 ≤ J) {ρ : ℝ} (hρ : ρ < 1) :
     0 < curvatureK J ρ :=
   curvatureK_pos hJ hρ

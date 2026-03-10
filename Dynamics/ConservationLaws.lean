@@ -35,7 +35,13 @@ variable {N : ℕ}
     for $\max_p [\langle\varepsilon, p\rangle - T \cdot S_q(p)]$ subject to $\sum p_j = 1$
     yield $\varepsilon_j = T \cdot \partial S_q/\partial p_j + \mu$ for all $j$, i.e.,
     $\nabla\Phi = T \cdot \nabla H + \mu \cdot \mathbf{1}$. The multiplier $\mu$ is the
-    shadow price of the budget constraint. -/
+    shadow price of the budget constraint.
+
+    **Prediction.** Factor payments sum to output (Euler exhaustion).
+    *Observable*: BEA GDP-by-income vs GDP-by-expenditure; the statistical
+    discrepancy should be uncorrelated with K estimates across sectors.
+    *Test*: regress BEA statistical discrepancy on cross-sector K estimates;
+    coefficient insignificantly different from zero. -/
 theorem euler_equilibrium_identity (J : ℕ) (q T : ℝ) (hT : 0 < T)
     (p : Fin J → ℝ) (eps : Fin J → ℝ) :
     -- nabla Phi(p*) = T * nabla S_q(p*) + mu * 1
@@ -298,7 +304,14 @@ theorem deadweight_from_variance (VarW T : ℝ) (hT : 0 < T) :
     regime boundary. Under continuous deformation of parameters, the winding number can only
     change when the trajectory passes through a degenerate point (tangency with $T = T^*$).
     Away from such degeneracies, the crisis count is robust to perturbations—small parameter
-    changes cannot eliminate a crisis. -/
+    changes cannot eliminate a crisis.
+
+    **Prediction.** Crisis count is an approximate integer function of K/T.
+    *Observable*: count regime-shift crossings (NBER recession dates) per
+    Kondratieff wave; the count should be approximately n = floor(K/T_avg)
+    where K is estimated from sectoral data and T_avg from NFCI.
+    *Test*: compare observed crisis counts across waves to predicted
+    integer values; chi-squared goodness-of-fit test. -/
 theorem crisis_count_invariant :
     -- The winding number of the trajectory around the critical
     -- manifold T = T* is a topological invariant

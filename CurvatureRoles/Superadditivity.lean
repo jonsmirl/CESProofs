@@ -304,7 +304,12 @@ private lemma bernoulli_rpow_ge_linear {ρ S : ℝ} (hρ0 : 0 < ρ) (hρ1 : ρ <
 
       F(t·x' + (1-t)·y') - 1 ≥ ((1-ρ)/(2J)) · t(1-t) · weightedIsoquantDistSq
 
-    Proof chain: Bernoulli + scalar concavity deficit summed componentwise. -/
+    Proof chain: Bernoulli + scalar concavity deficit summed componentwise.
+
+    **Prediction.** Merger premium scales as K × input-mix distance squared.
+    *Observable*: BEA M&A premium (price-to-book minus 1) vs estimated K ×
+    Herfindahl distance between merging firms' input mixes.
+    *Predicted sign*: positive, with slope proportional to (1-ρ)/(2J). -/
 theorem powerMean_isoquant_strong_concavity_weighted (J : ℕ) (hJ : 2 ≤ J)
     (ρ : ℝ) (hρ : ρ < 1) (hρ0 : 0 < ρ)
     (x' y' : Fin J → ℝ) (hx' : ∀ j, 0 < x' j) (hy' : ∀ j, 0 < y' j)
@@ -419,7 +424,12 @@ theorem powerMean_isoquant_strong_concavity_weighted (J : ℕ) (hJ : 2 ≤ J)
     and satisfies a strong concavity bound with coefficient C on the
     unit isoquant (using a weighted distance measure):
 
-      F(x + y) - F(x) - F(y) ≥ (C/2) · min(F(x), F(y)) · d²_w(x̂, ŷ) -/
+      F(x + y) - F(x) - F(y) ≥ (C/2) · min(F(x), F(y)) · d²_w(x̂, ŷ)
+
+    **Prediction.** Diversified-firm output premium proportional to K × input variance.
+    *Observable*: Compustat multi-segment firm TFP premium over sum-of-parts
+    benchmark, regressed on estimated K × input-share variance.
+    *Predicted sign*: positive coefficient, R² improvement over linear model. -/
 theorem superadditivity_quantitative_bound
     (F : AggFun J) (hhom : IsHomogDegOne J F)
     (x y : Fin J → ℝ) (hx : ∀ j, 0 < x j) (hy : ∀ j, 0 < y j)

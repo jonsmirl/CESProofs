@@ -129,7 +129,13 @@ noncomputable def fiedlerVector (_net : ComplementarityNetwork J) : Fin J → �
 /-- **NC-1**: The Laplacian QF is nonneg when all weights are nonneg.
     This is the fundamental positivity of the graph Laplacian.
     Economics: complementary networks (all ρ_{jk} < 1) have positive
-    Laplacian QF, ensuring concavity of the production surface. -/
+    Laplacian QF, ensuring concavity of the production surface.
+
+    **Prediction.** Trade networks with positive complementarity have all
+    nonneg Laplacian eigenvalues.
+    *Observable*: Comtrade bilateral complementarity Laplacian; all eigenvalues ≥ 0.
+    *Test*: compute graph Laplacian from SITC 2-digit bilateral trade
+    complementarity matrix; verify minimum eigenvalue ≥ 0. -/
 theorem laplacianQF_nonneg (net : ComplementarityNetwork J)
     (hw : ∀ j k, 0 ≤ net.w j k) (v : Fin J → ℝ) :
     0 ≤ laplacianQF net v := by
@@ -631,7 +637,14 @@ theorem laplacianQF_zero_iff_blockConstant (net : ComplementarityNetwork J)
     Economics: the spectral gap determines the weakest concavity
     direction — the most vulnerable to disruption. Strengthening
     the weakest bilateral complementarity has the largest marginal
-    effect on the production surface's curvature. -/
+    effect on the production surface's curvature.
+
+    **Prediction.** Fiedler vector identifies the most vulnerable supply-chain
+    partition; GDP deviations project onto this direction during crises.
+    *Observable*: project country GDP growth deviations onto Fiedler vector of
+    Comtrade complementarity Laplacian; Fiedler-direction variance share
+    rises during WTO-dated trade disruptions.
+    *Predicted sign*: Fiedler variance share in crisis > calm periods. -/
 theorem networkHessian_spectralGap_bound (net : ComplementarityNetwork J)
     (hw : ∀ j k, 0 ≤ net.w j k) {c : ℝ} (hc : 0 < c) (_hJ : 0 < J)
     (v : Fin J → ℝ) (hv : orthToOne J v) :

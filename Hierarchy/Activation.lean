@@ -38,7 +38,15 @@ theorem ngm_char_poly_two_level (k10 k21 : ℝ) (hk10 : 0 < k10) (hk21 : 0 < k21
 
 /-- For a 2-level system, nontrivial equilibrium exists iff P_cycle > 1.
 
-    **Proof.** The spectral radius of the $2\times 2$ cyclic NGM is $\sqrt{k_{10} k_{21}}$, so $\rho(K) > 1 \iff \sqrt{k_{10}k_{21}} > 1$. Squaring both sides (valid since both are positive) gives $k_{10}k_{21} > 1$. The converse applies $\sqrt{\cdot}$ to the product inequality, using monotonicity of the square root. -/
+    **Proof.** The spectral radius of the $2\times 2$ cyclic NGM is $\sqrt{k_{10} k_{21}}$, so $\rho(K) > 1 \iff \sqrt{k_{10}k_{21}} > 1$. Squaring both sides (valid since both are positive) gives $k_{10}k_{21} > 1$. The converse applies $\sqrt{\cdot}$ to the product inequality, using monotonicity of the square root.
+
+    **Prediction.** Sub-threshold levels can be activated by cross-layer coupling.
+    *Observable*: technology adoption episodes where individual-layer R₀ < 1
+    but cross-layer product k₁₀·k₂₁ > 1 triggers activation (e.g., AI chip
+    investment + open-weight model release). Adoption accelerates despite
+    neither layer being self-sustaining alone.
+    *Test*: identify technology pairs with sub-threshold individual adoption
+    rates but super-threshold combined product; verify adoption takeoff. -/
 theorem activation_two_level {k10 k21 : ℝ} (hk10 : 0 < k10) (hk21 : 0 < k21) :
     1 < Real.sqrt (k10 * k21) ↔ 1 < k10 * k21 := by
   constructor

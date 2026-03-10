@@ -336,7 +336,14 @@ def isStrictHierarchy {M N : ℕ} (w : Fin M → Fin N → ℝ) : Prop :=
     Schematic: constructing the full HierarchicalCESEconomy from spectral
     data requires eigenvector analysis not available in Mathlib.
 
-    **Proof.** Given an ordered spectrum with N spectral clusters separated by gaps exceeding γ (von Luxburg 2007), each cluster defines one hierarchical level. The timescale at level n is the inverse geometric mean of rates in cluster n, and the gain elasticity β_n is the effective within-cluster coupling. Simon's (1962) near-decomposability ensures the inter-cluster dynamics decouple at leading order. Schematic because spectral clustering requires eigenvector analysis not in Mathlib. -/
+    **Proof.** Given an ordered spectrum with N spectral clusters separated by gaps exceeding γ (von Luxburg 2007), each cluster defines one hierarchical level. The timescale at level n is the inverse geometric mean of rates in cluster n, and the gain elasticity β_n is the effective within-cluster coupling. Simon's (1962) near-decomposability ensures the inter-cluster dynamics decouple at leading order. Schematic because spectral clustering requires eigenvector analysis not in Mathlib.
+
+    **Prediction.** Eigenvalue clusters in economic coupling matrices match hierarchy levels.
+    *Observable*: eigenvalues of BEA I-O total requirements matrix; clusters
+    separated by gaps > 2× within-cluster spread, with N_eff matching EMD
+    timescale count (expected N_eff ≈ 5).
+    *Test*: spectral gap ratio test on I-O eigenvalues; compare N_eff to
+    EMD-discovered hierarchy count from FRED macro data. -/
 theorem spectral_hierarchy_justifies_N
     {M : ℕ} (spec : OrderedSpectrum M) (γ : ℝ) (_hγ : 1 < γ)
     (hs : HierarchySpec M) (_hj : hs.isJustified spec γ) :

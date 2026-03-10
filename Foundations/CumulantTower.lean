@@ -174,7 +174,13 @@ def escortCumulant2 (x : Fin J → ℝ) (ρ : ℝ) : ℝ :=
 
     In expected utility, prudence -u'''/u'' is a free parameter.
     In CES, it is LOCKED to rho through the escort distribution:
-    kappa_3 is fully determined by rho and the input vector x. -/
+    kappa_3 is fully determined by rho and the input vector x.
+
+    **Prediction.** Prudence covaries with sectoral ρ estimates.
+    *Observable*: SCF/HRS risk-attitude surveys matched to NBER-CES
+    industry-level σ estimates; positive cross-sector correlation between
+    measured prudence and estimated ρ, with R² exceeding free-parameter
+    expected-utility models. -/
 def escortCumulant3 (x : Fin J → ℝ) (ρ : ℝ) : ℝ :=
   escortRawMoment x ρ 3 - 3 * escortRawMoment x ρ 2 * escortRawMoment x ρ 1
     + 2 * escortRawMoment x ρ 1 ^ 3
@@ -187,7 +193,12 @@ def escortCumulant3 (x : Fin J → ℝ) (ρ : ℝ) : ℝ :=
     In expected utility, temperance u''''/u'' is independent of
     prudence u'''/u''. In CES, both are determined by rho. This
     is a falsifiable prediction: temperance and prudence should
-    covary in a specific way across sectors with different rho. -/
+    covary in a specific way across sectors with different rho.
+
+    **Prediction.** Temperance/prudence ratio approximately constant across sectors.
+    *Observable*: cross-sector SCF/HRS temperance and prudence estimates;
+    the ratio κ₄/κ₃ should have CV < 0.3 since both are locked to ρ.
+    *Test*: compute CV of temperance/prudence ratio across 2-digit NAICS sectors. -/
 def escortCumulant4 (x : Fin J → ℝ) (ρ : ℝ) : ℝ :=
   escortRawMoment x ρ 4 - 4 * escortRawMoment x ρ 3 * escortRawMoment x ρ 1
     - 3 * escortRawMoment x ρ 2 ^ 2

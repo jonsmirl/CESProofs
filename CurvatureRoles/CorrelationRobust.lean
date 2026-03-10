@@ -173,7 +173,12 @@ theorem eigenvaluePerp_sq_proportional_to_K_sq (hJ : 2 ≤ J) (ρ c : ℝ) :
     I₂ is proportional to K² up to J-dependent constants.
     Specifically: I₂ = (J-1)/(2c²) and K² = (1-ρ)²(J-1)²/J²,
     so I₂ = K²·J²/((J-1)·2c²·(1-ρ)²... but the clean relation is
-    I₂ · 2c² = J-1. -/
+    I₂ · 2c² = J-1.
+
+    **Prediction.** I₂ → 0 signals information exhaustion / model collapse onset.
+    *Observable*: rolling effective-dimension J_eff from NBER-CES manufacturing
+    panel; declining I₂ precedes forecast accuracy loss in sectoral output.
+    *Test*: Granger-causality of rolling I₂ on next-quarter forecast RMSE. -/
 theorem quadratic_fisher_info_scales (hJ : 2 ≤ J) (m : EquicorrModel) :
     fisherInfo2 J m * (2 * m.c ^ 2) = ↑J - 1 := by
   simp only [fisherInfo2]

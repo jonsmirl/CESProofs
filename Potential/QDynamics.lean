@@ -187,7 +187,13 @@ theorem qLogSumExp_at_one (T : ℝ) (ε : Fin J → ℝ) :
     This gives a lower bound on information friction from observable
     payoff variance and inclusive value.
 
-    **Proof.** Expand the $q$-log-sum-exp $\mathrm{LSE}_q(\varepsilon/T)$ (Proposition 8) in a cumulant series around the mean payoff $\bar{\varepsilon}$: $\mathrm{LSE}_q = \bar{\varepsilon} + \operatorname{Var}_q(\varepsilon)/(2T) + O(T^{-2})$, where $\operatorname{Var}_q$ is the variance under the $q$-escort distribution. Since the higher-order terms $O(T^{-2})$ are non-negative (they represent skewness and kurtosis contributions to welfare), truncating the series gives the inequality $\mathrm{LSE}_q \ge \bar{\varepsilon} + \operatorname{Var}_q(\varepsilon)/(2T)$. Subtracting the mean payoff and rearranging: $T \ge \operatorname{Var}_q(\varepsilon) / [2(\mathrm{LSE}_q - \bar{\varepsilon})]$. This lower bound is empirically useful: given observed payoff dispersion and inclusive value, one can bound the information friction $T$ from below without directly measuring allocation responses. -/
+    **Proof.** Expand the $q$-log-sum-exp $\mathrm{LSE}_q(\varepsilon/T)$ (Proposition 8) in a cumulant series around the mean payoff $\bar{\varepsilon}$: $\mathrm{LSE}_q = \bar{\varepsilon} + \operatorname{Var}_q(\varepsilon)/(2T) + O(T^{-2})$, where $\operatorname{Var}_q$ is the variance under the $q$-escort distribution. Since the higher-order terms $O(T^{-2})$ are non-negative (they represent skewness and kurtosis contributions to welfare), truncating the series gives the inequality $\mathrm{LSE}_q \ge \bar{\varepsilon} + \operatorname{Var}_q(\varepsilon)/(2T)$. Subtracting the mean payoff and rearranging: $T \ge \operatorname{Var}_q(\varepsilon) / [2(\mathrm{LSE}_q - \bar{\varepsilon})]$. This lower bound is empirically useful: given observed payoff dispersion and inclusive value, one can bound the information friction $T$ from below without directly measuring allocation responses.
+
+    **Prediction.** Cross-sector variance exceeding 2σ above mean signals T → T*.
+    *Observable*: rolling cross-sector IP variance from FRED vs NFCI stress index;
+    conditional crisis probability rises > 2× when variance exceeds 2σ threshold.
+    *Test*: logit regression of NBER recession indicator on standardized
+    cross-sector variance; odds ratio > 2 for z > 2. -/
 theorem qFriction_bound :
     -- T ≥ Var_q(ε) / (2 · LSE_q)
     True := trivial

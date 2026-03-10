@@ -113,7 +113,14 @@ theorem upstream_reform_sigma_prev {sigma_prev1 sigma_prev2 delta beta : ℝ}
 /-- **Corollary 1** -- Section 12 of Paper 4.
 
     The fastest layer can be regulated without welfare cost.
-    Financial regulation has zero net welfare effect. -/
+    Financial regulation has zero net welfare effect.
+
+    **Prediction.** Banking regulation (fastest layer) has zero persistent GDP effect.
+    *Observable*: BCL Capital Stringency Index in 158-country panel; local
+    projection IRF significant at h=1-2 quarters, insignificant by h≥4.
+    *Test*: Jordà local projection of GDP growth on CSI changes, with
+    fixed effects and controls; coefficient indistinguishable from zero
+    at horizon h≥4 quarters. -/
 theorem fastest_layer_regulation {phi_prev sigma_fast1 sigma_fast2 c : ℝ}
     (hs1 : sigma_fast1 ≠ 0) (hs2 : sigma_fast2 ≠ 0) :
     c * (phi_prev / sigma_fast1) * sigma_fast1 =
