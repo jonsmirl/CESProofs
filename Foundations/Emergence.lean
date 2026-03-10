@@ -43,10 +43,10 @@ def IsAggFixedPoint (k : ℕ) (F : AggFun k) : Prop :=
     functions f : ℝ₊ᵏ → ℝ₊, the power means M_ρ are the unique fixed points
     of the aggregation operator R_k for all k ≥ 2.
 
-    **Proof.** A fixed point of R_k is scale-consistent by definition.
+    **Proof.** A fixed point of $R_k$ is scale-consistent by definition.
     By Theorem 1 (Emergent CES), it must be a power mean. Conversely,
     every power mean is a fixed point because power means compose:
-    M_ρ(M_ρ(x₁,...,xₖ), ..., M_ρ(x_{k²-k+1},...,x_{k²})) = M_ρ(x₁,...,x_{k²}). -/
+    $M_\rho(M_\rho(x_1,\ldots,x_k), \ldots, M_\rho(x_{k^2-k+1},\ldots,x_{k^2})) = M_\rho(x_1,\ldots,x_{k^2})$. -/
 theorem aggregation_fixed_point (k : ℕ) (F : AggFun k)
     (hcont : IsContinuousAgg k F)
     (hsymm : IsSymmetric k F)
