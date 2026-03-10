@@ -95,6 +95,7 @@ import CESProofs.Dynamics.HierarchicalJ
 import CESProofs.Applications.AITransition
 import CESProofs.Applications.SettlementFeedback
 import CESProofs.Applications.KnowledgeCommons
+import CESProofs.Applications.FairInheritance
 
 /-!
 # DerivationTable: Authoritative Catalog of the CES Formalization
