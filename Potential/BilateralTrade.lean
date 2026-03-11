@@ -193,4 +193,36 @@ theorem efficiency_fragility_tradeoff {J : ℕ} (hJ : 2 ≤ J)
   exact ⟨complementary_goods_higher_Keff hJ hrho1 hrho2 hrho hTs hT,
          complementary_goods_more_fragile hJ hrho1 hrho2 hrho hc hd⟩
 
+-- ============================================================
+-- Section 5: Noise Tolerance Monotonicity
+-- ============================================================
+
+/-- **Noise tolerance is monotone increasing in ρ.**
+
+    The critical friction T* = 2(J-1)c²d² / K(ρ) increases with ρ,
+    because K = (1-ρ)(J-1)/J decreases with ρ. Systems with higher ρ
+    (more substitutable inputs) tolerate more informational noise
+    before the regime shift at T = T*.
+
+    This is the converse of `complementary_goods_more_fragile`:
+    substitute systems are more robust to noise, while complementary
+    systems are more fragile.
+
+    **Application (Arrow prediction test)**: If majoritarian political
+    systems map to higher effective ρ (more substitutable decision
+    channels), they should maintain governance quality better under
+    rising informational noise (internet penetration as T proxy).
+    The mapping majoritarian → ρ is speculative; this theorem provides
+    the mathematical backing IF the mapping holds.
+
+    **Proof.** T* = numerator / K where numerator > 0 is independent
+    of ρ. Since K decreases in ρ (`curvatureK_decreasing_in_rho`),
+    dividing by a smaller K yields a larger T*. -/
+theorem noise_tolerance_increasing_in_rho {J : ℕ} (hJ : 2 ≤ J)
+    {rho1 rho2 : ℝ} (hrho1 : rho1 < 1) (hrho2 : rho2 < 1)
+    (hrho : rho1 < rho2)
+    {c d_sq : ℝ} (hc : 0 < c) (hd : 0 < d_sq) :
+    criticalFriction J rho1 c d_sq < criticalFriction J rho2 c d_sq :=
+  complementary_goods_more_fragile hJ hrho1 hrho2 hrho hc hd
+
 end
