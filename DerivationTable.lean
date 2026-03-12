@@ -69,8 +69,10 @@ import CESProofs.Dynamics.EndogenousT
 import CESProofs.Dynamics.CoupledRhoT
 import CESProofs.Dynamics.Closure
 import CESProofs.Dynamics.VarianceCollapse
+import CESProofs.Dynamics.FiscalDynamics
 import CESProofs.Dynamics.GibbsMeasure
 import CESProofs.Dynamics.DiscreteStability
+import CESProofs.Dynamics.MinskySpeedRatio
 import CESProofs.Dynamics.TwoWorldDefs
 import CESProofs.Dynamics.TemporalOrdering
 import CESProofs.Dynamics.IndicatorClassification
@@ -455,6 +457,16 @@ section DynamicsCycles
 -- Paper3/VarianceCollapse.lean: signalDimensionality, varianceAfterNRounds,
 --   varianceDecayRate_pos, varianceDecayRate_lt_one, steadyStateVariance_pos,
 --   welfare_at_steadyState, welfare_increasing_in_M + 7 more
+
+-- Fiscal injection and demand-side dynamics (Results 93-99)
+#check @uniform_injection_zero_cost   -- Bu ∝ 1 → zero misallocation cost
+#check @targeted_injection_cost       -- Bu ⊥ 1 → cost = λ_⊥ · ‖b‖²
+#check @supply_fiscal_interaction     -- Strict welfare loss for nonzero b ⊥ 1
+
+-- Paper3/FiscalDynamics.lean: fiscal_injection_power, uniform_injection_zero_cost,
+--   targeted_injection_cost, targeted_injection_cost_nonpos,
+--   deficit_vs_tax_same_misallocation, supply_fiscal_interaction,
+--   steadyState_displacement [s], direction_dependent_inflation [s] + 2 more
 
 end DynamicsCycles
 

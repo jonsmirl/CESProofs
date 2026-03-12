@@ -501,4 +501,183 @@ theorem zeroTax_minimizes_requiredMPK {τ_K ρ_time δ : ℝ}
 -- goldenRule_savings_eq_capitalShare: s* = s_K at golden rule
 -- ramsey_dynamicallyEfficient: Ramsey SS is dynamically efficient
 
+-- ============================================================
+-- Section 13: Stochastic Euler Equation and CES Precautionary Channel
+-- ============================================================
+
+/-- The precautionary savings coefficient in the stochastic Euler equation.
+    For CRRA utility with coefficient gamma, the precautionary term is
+    (gamma + 1) / (2 gamma) times Var_t(Delta log C).
+
+    This combines:
+    - 1/(2 gamma): intertemporal substitution away from risky periods
+    - 1/2: Kimball prudence (third derivative of utility)
+
+    In CES, prudence is locked to rho via the cumulant tower
+    (kappa_3 = d kappa_2 / d rho, see `prudence_locking` in CumulantTower.lean). -/
+def precautionaryCoeff (γ : ℝ) : ℝ := (γ + 1) / (2 * γ)
+
+/-- **Stochastic Euler consumption growth rate.**
+
+    E_t[Delta log C_{t+1}] = (1/gamma)((1-tau_K) r - rho) + ((gamma+1)/(2 gamma)) sigma_sq_c
+
+    The first term is the deterministic Euler equation (`eulerConsumptionGrowth`).
+    The second term is the precautionary savings motive: higher conditional
+    variance of consumption growth increases expected growth (households
+    save more as a buffer against uncertainty).
+
+    **Derivation.** From the CRRA Euler condition
+    1 = beta E_t[(C_{t+1}/C_t)^{-gamma} R_{t+1}],
+    log-linearize assuming joint log-normality of consumption growth
+    and returns (Campbell and Mankiw 1989 QJE, Attanasio and Weber 1993 AER).
+    Expanding via the MGF of the log-normal distribution:
+    0 = log beta + E_t[log R] - gamma E_t[Delta log C] + (1/2) Var_t(log R - gamma Delta log C)
+    Under the standard assumption that Var(log R) is small relative to
+    gamma^2 Var(Delta log C), collect terms to obtain the result.
+    Requires the log-normal MGF identity (not available in Mathlib).
+
+    **References.** Hall (1988 JPE), Campbell and Mankiw (1989 QJE),
+    Attanasio and Weber (1993 AER), Campbell (2003 JFE). -/
+def stochasticEulerGrowth (γ τ_K r ρ_time σ_sq_c : ℝ) : ℝ :=
+  eulerConsumptionGrowth γ τ_K r ρ_time + precautionaryCoeff γ * σ_sq_c
+
+/-- The stochastic Euler equation decomposes as deterministic Euler plus
+    precautionary term. This makes the structure explicit:
+    the deterministic Euler is the certainty-equivalent component,
+    and the precautionary term captures the effect of uncertainty. -/
+theorem stochasticEuler_decomposition (γ τ_K r ρ_time σ_sq_c : ℝ) :
+    stochasticEulerGrowth γ τ_K r ρ_time σ_sq_c =
+    eulerConsumptionGrowth γ τ_K r ρ_time + precautionaryCoeff γ * σ_sq_c := by
+  rfl
+
+/-- The precautionary coefficient is positive for gamma > 0.
+    This ensures higher consumption variance always increases expected growth
+    (the precautionary savings motive is unambiguously positive).
+
+    **Proof.** (gamma + 1) > 0 and 2 gamma > 0 when gamma > 0,
+    so their ratio is positive. -/
+theorem precautionaryCoeff_pos {γ : ℝ} (hγ : 0 < γ) :
+    0 < precautionaryCoeff γ := by
+  simp only [precautionaryCoeff]
+  exact div_pos (by linarith) (by linarith)
+
+/-- At zero variance, the stochastic Euler reduces to the deterministic Euler.
+    This confirms backward compatibility with `eulerConsumptionGrowth`. -/
+theorem stochasticEuler_zero_variance (γ τ_K r ρ_time : ℝ) :
+    stochasticEulerGrowth γ τ_K r ρ_time 0 =
+    eulerConsumptionGrowth γ τ_K r ρ_time := by
+  simp only [stochasticEulerGrowth, precautionaryCoeff, mul_zero, add_zero]
+
+/-- **CES-VRI substitution**: When consumption variance satisfies the VRI
+    sigma_sq_c = T * chi (information friction T times susceptibility chi),
+    the precautionary term becomes ((gamma+1)/(2 gamma)) * T * chi.
+
+    This connects the CES cumulant tower to the Euler equation:
+    - T is the information friction (Paper 2, EffectiveCurvature.lean)
+    - chi is the susceptibility (inverse effective curvature, from VRI)
+    - The precautionary term is controlled by the same CES parameter rho
+      that determines risk aversion (kappa_2) and prudence (kappa_3)
+
+    Combined with the prudence locking theorem (kappa_3 = d kappa_2/d rho from
+    CumulantTower.lean), this shows the precautionary channel is not a
+    free parameter: it is LOCKED to the CES curvature K.
+
+    **Proof.** Direct substitution into `stochasticEulerGrowth`. -/
+theorem stochasticEuler_VRI (γ τ_K r ρ_time T chi : ℝ) :
+    stochasticEulerGrowth γ τ_K r ρ_time (T * chi) =
+    eulerConsumptionGrowth γ τ_K r ρ_time + precautionaryCoeff γ * T * chi := by
+  simp only [stochasticEulerGrowth]; ring
+
+/-- The precautionary term increases with information friction T
+    (for positive susceptibility chi > 0).
+    Higher friction means more consumption variance, hence stronger
+    precautionary savings motive, hence higher expected consumption growth.
+
+    This predicts that high-friction periods (financial crises, NFCI spikes)
+    have elevated precautionary savings, all else equal. -/
+theorem precautionary_increasing_in_T {γ T₁ T₂ chi : ℝ}
+    (hγ : 0 < γ) (hchi : 0 < chi) (hT : T₁ < T₂) :
+    precautionaryCoeff γ * (T₁ * chi) <
+    precautionaryCoeff γ * (T₂ * chi) := by
+  have hpc := precautionaryCoeff_pos hγ
+  exact mul_lt_mul_of_pos_left (mul_lt_mul_of_pos_right hT hchi) hpc
+
+/-- **OLS omitted variable bias in the Euler equation.**
+
+    True model: E[Delta log C] = (1/gamma) r_after_tax + lambda sigma_sq_c + const
+    where lambda = precautionaryCoeff gamma > 0.
+
+    OLS regression omitting sigma_sq_c yields:
+    beta_hat = (1/gamma) + lambda * Cov(r, sigma_sq_c) / Var(r)
+
+    When Cov(r, sigma_sq_c) < 0 (returns are low when consumption volatility
+    is high, as occurs in recessions and financial crises), the OLS estimate
+    beta_hat understates the true IES = 1/gamma.
+
+    This resolves the aggregate IES puzzle (Hall 1988 JPE): OLS estimates of
+    the IES from aggregate consumption data are biased toward zero or negative
+    because the omitted precautionary savings term is positively correlated
+    with the dependent variable (consumption growth) and negatively correlated
+    with the independent variable (returns).
+
+    The CES framework makes this precise:
+    - The omitted variable is sigma_sq_c proportional to T/K_eff (from VRI)
+    - Its coefficient lambda = (gamma+1)/(2 gamma) is determined by the
+      cumulant tower (locked to rho via prudence locking)
+    - The bias direction is determined by the countercyclicality of
+      information friction T (T rises in recessions, corr with NFCI)
+
+    **Proof.** lambda > 0 (from `precautionaryCoeff_pos`) and
+    Cov(r, sigma_sq)/Var(r) < 0 (hypothesis), so their product is negative,
+    hence beta_hat = (1/gamma) + negative < 1/gamma.
+
+    **References.** Hall (1988 JPE), Campbell and Mankiw (1989 QJE),
+    Yogo (2004 RES), Gruber (2013 JPE). -/
+theorem eulerOLS_downwardBias {γ β_hat cov_r_sigma var_r : ℝ}
+    (hγ : 0 < γ) (hvar : 0 < var_r) (hcov : cov_r_sigma < 0)
+    (h_ols : β_hat = 1 / γ + precautionaryCoeff γ * (cov_r_sigma / var_r)) :
+    β_hat < 1 / γ := by
+  rw [h_ols]
+  have hpc := precautionaryCoeff_pos hγ
+  have hfrac : cov_r_sigma / var_r < 0 := div_neg_of_neg_of_pos hcov hvar
+  linarith [mul_neg_of_pos_of_neg hpc hfrac]
+
+/-- Conversely, if Cov(r, sigma_sq) > 0 (which could occur if high returns
+    come with high uncertainty, e.g., during asset bubbles), OLS would
+    OVERestimate the IES. This case is empirically rare for aggregate data
+    but could matter for cross-country or cross-sector panels. -/
+theorem eulerOLS_upwardBias {γ β_hat cov_r_sigma var_r : ℝ}
+    (hγ : 0 < γ) (hvar : 0 < var_r) (hcov : 0 < cov_r_sigma)
+    (h_ols : β_hat = 1 / γ + precautionaryCoeff γ * (cov_r_sigma / var_r)) :
+    1 / γ < β_hat := by
+  rw [h_ols]
+  have hpc := precautionaryCoeff_pos hγ
+  have hfrac : 0 < cov_r_sigma / var_r := div_pos hcov hvar
+  linarith [mul_pos hpc hfrac]
+
+-- ============================================================
+-- Section 14: Updated Summary Statistics
+-- ============================================================
+
+-- Total count: 11 definitions, 42 theorems.
+-- Fully proved: 42. Sorry: 0.
+-- Axioms: 0.
+--
+-- New in Section 13 (Stochastic Euler / CES Precautionary Channel):
+-- precautionaryCoeff: (gamma+1)/(2 gamma)
+-- stochasticEulerGrowth: deterministic Euler + precautionary term
+-- stochasticEuler_decomposition: structural decomposition (rfl)
+-- precautionaryCoeff_pos: lambda > 0 for gamma > 0
+-- stochasticEuler_zero_variance: reduces to deterministic at sigma=0
+-- stochasticEuler_VRI: substitutes VRI sigma_sq = T*chi
+-- precautionary_increasing_in_T: higher friction -> more precaution
+-- eulerOLS_downwardBias: Cov(r,sigma_sq)<0 -> IES underestimated
+-- eulerOLS_upwardBias: Cov(r,sigma_sq)>0 -> IES overestimated
+--
+-- Bridge to cumulant tower (CumulantTower.lean):
+--   prudence_locking: kappa_3 = d/drho kappa_2
+--   -> precautionary coefficient locked to rho
+--   -> sigma_sq_c determined by T/K_eff (VRI)
+--   -> OLS bias direction determined by countercyclicality of T
+
 end

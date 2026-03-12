@@ -196,30 +196,32 @@ theorem rhoT_limit_cycle :
     The (rho, T) limit cycle passes through four quadrants,
     corresponding to the four phases of a Perez technological surge:
 
-    | Quadrant       | rho trend | T trend | Phase       |
-    |----------------|-----------|---------|-------------|
-    | (rho up, T up) | +         | +       | Installation|
-    | (rho up, T dn) | +         | -       | Deployment  |
-    | (rho dn, T dn) | -         | -       | Maturity    |
-    | (rho dn, T up) | -         | +       | Turning pt  |
+    | Quadrant          | rho trend | T trend | Phase        |
+    |-------------------|-----------|---------|--------------|
+    | (rho dn, T dn)   | -         | -       | Installation |
+    | (rho dn, T up)   | -         | +       | Frenzy       |
+    | (rho up, T up)   | +         | +       | Crisis       |
+    | (rho up, T dn)   | +         | -       | Deployment   |
 
+    The traversal is clockwise: Installation → Frenzy → Crisis → Deployment.
     The sign analysis follows from the direction field of the
     coupled (rho, T) system in each quadrant.
 
     **Proof.** The four Perez phases (Perez 2002) correspond to the four quadrants
     of the $(\dot{\rho}, \dot{T})$ sign diagram on the limit cycle. The direction
-    field determines: Installation ($\dot{\rho} > 0, \dot{T} > 0$): new technology
-    raises $\rho$ while speculative capital raises $T$. Deployment
-    ($\dot{\rho} > 0, \dot{T} < 0$): standardization continues while institutional
-    learning reduces $T$. Maturity ($\dot{\rho} < 0, \dot{T} < 0$): complementarity
-    deepens as $T$ falls. Turning point ($\dot{\rho} < 0, \dot{T} > 0$): Minsky
-    feedback raises $T$ while $\rho$ still falling.
+    field determines: Installation ($\dot{\rho} < 0, \dot{T} < 0$): new technology
+    deepens complementarity (lowers $\rho$) while $T$ falls. Frenzy
+    ($\dot{\rho} < 0, \dot{T} > 0$): Minsky drift pushes $T$ up while $\rho$ still
+    falling. Crisis ($\dot{\rho} > 0, \dot{T} > 0$): selection reverses as firms
+    modularize, raising $\rho$, while $T$ still rising. Deployment
+    ($\dot{\rho} > 0, \dot{T} < 0$): $T$ mean-reverts downward as technology
+    standardizes and $\rho$ continues rising.
 
     **Prediction.** (ρ, T) traces a four-phase Perez limit cycle.
     *Observable*: rolling estimates of ρ (from NBER-CES) and T (from NFCI/credit
-    spreads) over 40-60 year windows; trajectory should trace counterclockwise
-    loop through four quadrants matching Installation → Deployment → Maturity →
-    Turning Point sequence.
+    spreads) over 40-60 year windows; trajectory should trace clockwise
+    loop through four quadrants matching Installation → Frenzy → Crisis →
+    Deployment sequence.
     *Test*: phase-plane plot of (ρ̂, T̂); quadrant transition sequence test
     against canonical Perez chronology (1971-2008 wave). -/
 theorem perez_phases :
