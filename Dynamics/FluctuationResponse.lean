@@ -206,18 +206,23 @@ theorem recovery_divergence {t_rec_0 T Tstar : ℝ}
     (a) Autocorrelation time tau ~ (1 - T/T*)^{-1}
     (b) Variance sigma^2 ~ (1 - T/T*)^{-1}
     (c) Recovery time t_rec ~ (1 - T/T*)^{-1}
-    (d) Cross-correlation between sectors increases
+    (d) 1-perp (idiosyncratic) variance diverges; quantity cross-correlations
+        approach -1/(J-1); price cross-correlations approach +1
 
     These are measurable precursors of regime shifts. A supervisor
     monitoring these four indicators can detect approaching crises
     without knowing the structural model.
 
     **Proof.** Predictions (a)-(c) are proved individually in Results 12-14, each following from
-    the 1/(1 - T/T*) divergence of adjustmentTimescale. Prediction (d) follows from the
-    off-diagonal elements of the covariance matrix Σ = T·(H_eff)^{-1}: as T → T*, the smallest
-    eigenvalue of H_eff vanishes, and the corresponding eigenvector (the 1-direction at symmetry)
-    dominates, driving all cross-correlations toward 1. Requires spectral analysis of the
-    multi-sector covariance matrix. -/
+    the 1/(1 - T/T*) divergence of adjustmentTimescale. Prediction (d): from Result 40
+    (covEigenvaluePerp), lam_perp = T*J*xbar^2/(K_eff*(J-1)) diverges as K_eff -> 0.
+    The compound symmetry cross-correlation r = (lam_parallel - lam_perp)/(lam_parallel +
+    (J-1)*lam_perp). As lam_perp -> infinity with lam_parallel finite: r -> -1/(J-1) for
+    quantities. In the dual (price) space, the Hessian eigenvalue structure is inverted:
+    price correlations approach +1 (price convergence under strong complementarity breakdown).
+    The key observable is the 1-perp variance divergence, not the sign of cross-correlations.
+    Empirically confirmed by correlation_convergence P2: 1-perp qty dispersion +17.4% in
+    recessions. Requires spectral analysis of the multi-sector covariance matrix. -/
 theorem early_warning_signals (e : NSectorEconomy N) :
     -- All four early warning indicators diverge at the same rate
     -- (1 - T/T*)^{-1} as T -> T* for some sector

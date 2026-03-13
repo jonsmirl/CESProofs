@@ -418,8 +418,8 @@ section DynamicsCycles
 -- Paper3/FluctuationResponse.lean: dynamic_vri [s], early_warning_signals [s] + 11 more
 
 -- Symmetric adjustment
--- Paper3/SymmetricAdjustment.lean: symmetric_adjustment [s], onsager_testable [s],
---   kramers_rate [s] + 10 more
+-- Paper3/SymmetricAdjustment.lean: symmetric_adjustment [s], commutator_decomposition [p],
+--   var_symmetric_of_commute [p], h_product_symmetric [p], kramers_rate [s] + 10 more
 
 -- Conservation laws
 -- Paper3/ConservationLaws.lean: euler_equilibrium_identity [s],
@@ -899,7 +899,10 @@ Requires: Hopf bifurcation, Poincaré-Bendixson, replicator equations, phase por
 | Paper3/Closure.lean | `closure_topological` | Topological constraint |
 | Paper3c/CoupledSystem.lean | `coupled_3d_fixed_point_exists` | 3D fixed point |
 | Paper3c/CoupledSystem.lean | `hopf_bifurcation_3d` | 3D Hopf bifurcation |
-| Paper3c/CoupledSystem.lean | `diversity_crash_precedes_crisis` | Leading indicator |
+| Dynamics/CoupledRhoT.lean | `entry_exit_ratio` | τ_entry/τ_exit = (2-ρ) [PROVED] |
+| Dynamics/CoupledRhoT.lean | `exit_faster_than_entry` | Exit faster for ρ<1 [PROVED] |
+| Dynamics/CoupledRhoT.lean | `additive_friction_reverses_ordering` | Additive perturbation reverses ordering [PROVED] |
+| Dynamics/CoupledRhoT.lean | `networkFriction_reverses_fold_asymmetry` | Network friction reverses cross-sectional ranking [PROVED] |
 | Paper3c/CoupledSystem.lean | `J_variance_increases_near_fold` | Variance near fold |
 | Paper3c/CoupledSystem.lean | `mode_specific_J_warning` | Mode-specific warning |
 | Paper3c/EntryExitDynamics.lean | `phase_portrait` | Phase portrait analysis |
@@ -943,7 +946,9 @@ Requires: Kramers escape, Langevin equations, fluctuation-dissipation.
 | Paper2/QDynamics.lean | `qOnsager_symmetry` | q-Onsager |
 | Paper2/QDynamics.lean | `qKramers_barrier` | q-Kramers escape |
 | Paper3/SymmetricAdjustment.lean | `symmetric_adjustment` | Symmetric relaxation |
-| Paper3/SymmetricAdjustment.lean | `onsager_testable` | Onsager reciprocity |
+| Paper3/SymmetricAdjustment.lean | `commutator_decomposition` | VAR asymmetry = [L,H]/2 |
+| Paper3/SymmetricAdjustment.lean | `var_symmetric_of_commute` | LH symmetric iff commute |
+| Paper3/SymmetricAdjustment.lean | `h_product_symmetric` | H-symmetry (correct Onsager test) |
 | Paper3/SymmetricAdjustment.lean | `kramers_rate` | Kramers escape rate |
 | Paper3/FluctuationResponse.lean | `dynamic_vri` | Dynamic VRI |
 | Paper3/FluctuationResponse.lean | `early_warning_signals` | Critical slowing down |

@@ -244,38 +244,36 @@ theorem hopf_bifurcation_3d :
     True := trivial
 
 -- ============================================================
--- Proposition 3c.3: Diversity Crash Precedes Crisis
+-- Proposition 3c.3: Asymmetric Fold Response
 -- ============================================================
-
-/-- **Proposition 3c.3 (Diversity Crash Precedes Crisis).**
-    In the limit cycle, J begins to decline BEFORE T peaks.
-    This is because rising T reduces K_eff, making participation
-    less attractive, triggering exit before T reaches its maximum.
-
-    Observable implication: industry exit rates and firm deaths
-    rise before aggregate friction metrics peak.
-
-    **Proof.** In the 3D limit cycle, consider the coupling between $J$ and $T$. Rising information friction $T$ reduces the effective curvature $K_{\mathrm{eff}} = K \cdot (1 - T/T^*)^+$, which lowers the superadditivity premium that makes participation attractive. This means $\partial f_J/\partial T < 0$: firms begin exiting as soon as $T$ starts rising, well before $T$ reaches its maximum. Conversely, the reverse coupling $\partial f_T/\partial J$ is weaker because adding or removing firms affects aggregate friction only indirectly through the diversity channel. This asymmetry in coupling strengths creates a phase lag: $dJ/dt$ crosses zero (from positive to negative) while $T$ is still rising, so the decline in diversity leads the peak in friction. The phase offset is approximately $\arctan(|\partial f_J/\partial T| / |\partial f_T/\partial J|)$ in the linearized system. The observable implication is that industry exit rates and firm death counts rise before aggregate stress indicators (spreads, volatility) peak. -/
-theorem diversity_crash_precedes_crisis :
-    -- In the (rho, T, J) limit cycle:
-    -- dJ/dt < 0 begins before T reaches its maximum
-    -- J is a leading indicator of crisis
-    True := trivial
+-- HISTORY: Originally stated as "Diversity Crash Precedes Crisis" —
+-- claimed J declines BEFORE T peaks (diversity as leading indicator).
+-- Empirically falsified at three frequencies (annual BDS, monthly JOLTS,
+-- weekly ICSA): stress drives firm dynamics (T→J), not the reverse.
+-- Replaced by proved theorems `entry_exit_ratio` and `exit_faster_than_entry`
+-- below (Proposition 3c.3a-b), which formalize the empirically supported
+-- asymmetric response prediction. See `test_fold_direction.py`.
 
 -- ============================================================
 -- Proposition 3c.4: J as Leading Indicator
 -- ============================================================
 
-/-- **Proposition 3c.4 (J as Leading Indicator).**
+/-- **Proposition 3c.4 (Pre-Crisis Deceleration in J).**
     Near the fold bifurcation (where J can collapse), the
     variance of J increases: Var(J) diverges as the system
     approaches the bifurcation point.
 
-    This is the pre-crisis deceleration (formerly critical slowing
-    down) applied to the participation dimension.
+    This is pre-crisis deceleration (Scheffer et al. 2009) applied to the
+    participation dimension. Note: this is a VARIANCE signal, not a LEVEL
+    signal. The variance of firm entry/exit rates increases as the fold
+    approaches, even though the direction of causation runs T to J (stress
+    drives firm dynamics). The increased variance is a warning that the
+    system is near a tipping point, regardless of which variable is the driver.
 
-    Observable: the cross-sectional variance of firm entry/exit
-    rates increases before a regime shift.
+    Observable: cross-sectional variance of firm entry/exit rates increases
+    before a regime shift. This is distinct from Prop 3c.3 (asymmetric
+    response): variance growth is about proximity to fold, while asymmetric
+    response is about the dynamics at the fold.
 
     **Proof.** By pre-crisis deceleration theory near a fold bifurcation (Scheffer
     et al. 2009; Kuehn 2011): the dominant eigenvalue of the Jacobian approaches
@@ -285,8 +283,8 @@ theorem diversity_crash_precedes_crisis :
     autocorrelation in $J$ before the regime shift. -/
 theorem J_variance_increases_near_fold :
     -- Near the fold bifurcation:
-    -- Var(J) increases (critical slowing down)
-    -- J is a leading indicator of regime shift
+    -- Var(J) increases (pre-crisis deceleration)
+    -- Variance signal warns of proximity to fold, independent of causal direction
     True := trivial
 
 /-- The return rate to equilibrium decreases near the fold,
@@ -298,6 +296,255 @@ def returnRate (lambda structural_factor distance_to_fold : ℝ) : ℝ :=
 theorem returnRate_vanishes_at_fold (lambda sf : ℝ) :
     returnRate lambda sf 0 = 0 := by
   simp [returnRate]
+
+-- ============================================================
+-- Proposition 3c.3a: Asymmetric Fold Response (PROVED)
+-- ============================================================
+-- These theorems formalize the empirically supported version of
+-- Prop 3c.3: the fold creates asymmetric entry-exit dynamics.
+-- The diversity mode eigenvalue λ_⊥ = -σ(2-ρ)/ε relaxes (2-ρ)
+-- times faster than the aggregate mode λ_∥ = -σ/ε. Since exit
+-- is driven by the fast diversity mode and entry requires the
+-- slow aggregate mode to improve, τ_entry/τ_exit = (2-ρ) > 1.
+
+/-- Diversity mode relaxation time: τ_⊥ = ε / (σ · (2 - ρ)).
+    This is the timescale on which the diversity (1⊥) mode decays,
+    governing how fast firms exit when K_eff drops at the fold.
+    From Paper 4, Section 5: the Jacobian eigenvalue on 1⊥ is
+    -σ(2-ρ)/ε, so the relaxation time is its reciprocal. -/
+def foldExitTime (σ ε ρ : ℝ) : ℝ := ε / (σ * (2 - ρ))
+
+/-- Aggregate mode relaxation time: τ_∥ = ε / σ.
+    This is the timescale on which aggregate friction T adjusts,
+    governing how long entry must wait for conditions to improve.
+    From Paper 4, Section 5: the aggregate Jacobian eigenvalue is
+    -σ/ε, so the relaxation time is ε/σ. -/
+def foldEntryTime (σ ε : ℝ) : ℝ := ε / σ
+
+/-- **Proposition 3c.3a (Entry-Exit Timescale Ratio).**
+    The ratio of aggregate (entry) to diversity (exit) relaxation
+    times is exactly (2 - ρ). This is the quantitative prediction
+    for the fold asymmetry: more complementary sectors (lower ρ)
+    have more asymmetric fold dynamics.
+
+    Empirical calibration: for ρ ≈ -0.07 (typical NAICS sector),
+    (2 - ρ) ≈ 2.07, predicting entry takes ~2x longer than exit.
+    For ρ ≈ -0.48 (semiconductors), (2 - ρ) ≈ 2.48. The observed
+    exit-entry lag asymmetry of ~5 years (BDS annual data) is
+    consistent with (2 - ρ) ≈ 2-2.5 and a base cycle of 2-3 years. -/
+theorem entry_exit_ratio (σ ε ρ : ℝ) (hσ : 0 < σ) (hρ : ρ < 2) (hε : ε ≠ 0) :
+    foldEntryTime σ ε / foldExitTime σ ε ρ = 2 - ρ := by
+  simp only [foldEntryTime, foldExitTime]
+  have hσ' : σ ≠ 0 := ne_of_gt hσ
+  have h2ρ : (2 : ℝ) - ρ ≠ 0 := by linarith
+  field_simp
+
+/-- **Proposition 3c.3b (Exit Faster Than Entry).**
+    For all complementary sectors (ρ < 1), the diversity mode
+    relaxes strictly faster than the aggregate mode, so exit at
+    the fold is faster than entry after the fold.
+
+    This is the core asymmetry: collapse is rapid (firms exit the
+    fold discontinuously via the fast diversity mode), while recovery
+    is gradual (entry requires sustained low friction, governed by
+    the slower aggregate mode). -/
+theorem exit_faster_than_entry (σ ε ρ : ℝ)
+    (hσ : 0 < σ) (hε : 0 < ε) (hρ : ρ < 1) :
+    foldExitTime σ ε ρ < foldEntryTime σ ε := by
+  simp only [foldExitTime, foldEntryTime]
+  exact div_lt_div_of_pos_left hε hσ (by nlinarith)
+
+/-- The asymmetry ratio exceeds 1 for all complementary sectors.
+
+    **Empirical status (2026-03-12):** Confirmed. 15/19 NAICS sectors show positive
+    entry-exit asymmetry (exit responds faster than entry), binomial p=0.010.
+    Strongest for substitute sectors (10/10 positive). See `test_fold_direction.py`. -/
+theorem fold_asymmetry_exceeds_one (ρ : ℝ) (hρ : ρ < 1) : 1 < 2 - ρ := by
+  linarith
+
+/-- More complementary sectors have larger asymmetry (linearized prediction).
+
+    **Empirical caveat (2026-03-12):** This linearized monotonicity is REVERSED in data.
+    Substitute sectors (σ>1) show MORE asymmetry (mean 1.03) than complement sectors
+    (σ<1, mean -0.20). Spearman r=-0.575, p=0.010 across 19 NAICS sectors.
+    Network friction in complementary sectors slows exits too (removing one complement
+    disrupts the chain), compressing the entry-exit ratio. The qualitative prediction
+    (exit faster than entry, `fold_asymmetry_exceeds_one`) holds: 15/19 sectors positive,
+    p=0.010. But the cross-sectional ranking by ρ is reversed. The linearization
+    misses inter-firm network effects that dominate in high-complementarity sectors.
+    See `test_fold_direction.py`, subtest `fold_direction_asymmetry_ratio`. -/
+theorem fold_asymmetry_monotone (ρ₁ ρ₂ : ℝ) (h : ρ₁ < ρ₂) :
+    2 - ρ₂ < 2 - ρ₁ := by linarith
+
+/-- At the substitute boundary (ρ = 1), the two timescales coincide.
+    The asymmetry vanishes exactly when curvature K = 0 and the fold
+    disappears. -/
+theorem fold_timescales_equal_at_boundary (σ ε : ℝ) :
+    foldExitTime σ ε 1 = foldEntryTime σ ε := by
+  simp only [foldExitTime, foldEntryTime]; ring
+
+-- ============================================================
+-- Network Friction Correction to Fold Asymmetry
+-- ============================================================
+-- The linearized prediction `fold_asymmetry_monotone` says lower ρ → more
+-- asymmetry. Empirically this is REVERSED (Spearman r = −0.575, p = 0.010).
+-- Root cause: removing a firm from a complementary network disrupts the
+-- chain, creating cascading delays proportional to curvature K.
+-- Model: τ_exit_eff = τ_exit_linearized + η · K, where η > 0 is the
+-- network friction coefficient.
+
+/-- Effective exit time with network friction: linearized eigenvalue
+    time plus disruption cost η · K. In complementary sectors (high K),
+    removing one firm disrupts the complementary chain, slowing exits. -/
+def networkFrictionExitTime (σ ε ρ η K : ℝ) : ℝ :=
+  foldExitTime σ ε ρ + η * K
+
+/-- Entry time is unchanged by network friction: adding a firm does not
+    disrupt existing complementary relationships. -/
+def networkFrictionEntryTime (σ ε : ℝ) : ℝ := foldEntryTime σ ε
+
+/-- Asymmetry ratio under network friction: τ_entry / τ_exit_eff.
+    Network friction compresses this ratio for complementary sectors. -/
+def networkFrictionAsymmetry (σ ε ρ η K : ℝ) : ℝ :=
+  networkFrictionEntryTime σ ε / networkFrictionExitTime σ ε ρ η K
+
+/-- **Network friction slows exit (T1).** The effective exit time is at
+    least as large as the linearized exit time, since η · K ≥ 0. -/
+theorem networkFriction_slows_exit (σ ε ρ η K : ℝ)
+    (hη : 0 ≤ η) (hK : 0 ≤ K) :
+    foldExitTime σ ε ρ ≤ networkFrictionExitTime σ ε ρ η K := by
+  simp only [networkFrictionExitTime]
+  linarith [mul_nonneg hη hK]
+
+/-- **Recovery at zero friction (T2a).** When η = 0, the effective exit
+    time equals the linearized exit time. -/
+theorem networkFriction_recovers_at_zero_eta (σ ε ρ K : ℝ) :
+    networkFrictionExitTime σ ε ρ 0 K = foldExitTime σ ε ρ := by
+  simp [networkFrictionExitTime, zero_mul]
+
+/-- **Recovery at zero curvature (T2b).** When K = 0 (substitute sector),
+    there is no complementary network to disrupt, so effective = linearized. -/
+theorem networkFriction_recovers_at_zero_K (σ ε ρ η : ℝ) :
+    networkFrictionExitTime σ ε ρ η 0 = foldExitTime σ ε ρ := by
+  simp [networkFrictionExitTime, mul_zero]
+
+/-- **Additive friction reverses ordering (T3).** THE KEY ABSTRACT LEMMA.
+    If τ₁ < τ₂ but K₂ < K₁ (anti-correlated), there exists η > 0 such
+    that the ordering reverses: τ₂ + η·K₂ < τ₁ + η·K₁.
+    This is why network friction can flip the cross-sectional ranking. -/
+theorem additive_friction_reverses_ordering
+    {τ₁ τ₂ K₁ K₂ : ℝ} (hτ : τ₁ < τ₂) (hK : K₂ < K₁) :
+    ∃ η : ℝ, 0 < η ∧ τ₂ + η * K₂ < τ₁ + η * K₁ := by
+  have hKpos : 0 < K₁ - K₂ := by linarith
+  have hτpos : 0 < τ₂ - τ₁ := by linarith
+  refine ⟨(τ₂ - τ₁) / (K₁ - K₂) + 1, by positivity, ?_⟩
+  -- Goal: τ₂ + ((τ₂-τ₁)/(K₁-K₂) + 1) * K₂ < τ₁ + ((τ₂-τ₁)/(K₁-K₂) + 1) * K₁
+  -- Equivalently: τ₂ - τ₁ < ((τ₂-τ₁)/(K₁-K₂) + 1) * (K₁ - K₂)
+  -- RHS = (τ₂-τ₁) + (K₁-K₂) > τ₂ - τ₁  ✓
+  have key : ((τ₂ - τ₁) / (K₁ - K₂) + 1) * (K₁ - K₂) = (τ₂ - τ₁) + (K₁ - K₂) := by
+    rw [add_mul, div_mul_cancel₀ _ (ne_of_gt hKpos), one_mul]
+  nlinarith [mul_comm ((τ₂ - τ₁) / (K₁ - K₂) + 1) K₁,
+             mul_comm ((τ₂ - τ₁) / (K₁ - K₂) + 1) K₂]
+
+/-- **Network friction reverses fold asymmetry (T4).** APPLIED REVERSAL.
+    For two sectors with ρ₁ < ρ₂ (sector 1 more complementary) and
+    K₁ > K₂ (sector 1 has higher curvature), there exists η > 0 such
+    that the effective exit time of sector 1 exceeds that of sector 2,
+    reversing the linearized prediction.
+
+    This resolves the empirical puzzle: the linearized theory
+    (`fold_asymmetry_monotone`) correctly predicts exit faster than entry
+    in each sector, but incorrectly predicts more complementary sectors
+    show more asymmetry. Network friction reverses the cross-sectional
+    ranking while preserving the within-sector prediction. -/
+theorem networkFriction_reverses_fold_asymmetry
+    {σ ε ρ₁ ρ₂ K₁ K₂ : ℝ}
+    (hσ : 0 < σ) (hε : 0 < ε)
+    (_hρ₁ : ρ₁ < 1) (hρ₂ : ρ₂ < 1) (hρ : ρ₁ < ρ₂)
+    (hK : K₂ < K₁) :
+    ∃ η : ℝ, 0 < η ∧
+      networkFrictionExitTime σ ε ρ₂ η K₂ <
+      networkFrictionExitTime σ ε ρ₁ η K₁ := by
+  simp only [networkFrictionExitTime]
+  apply additive_friction_reverses_ordering
+  · -- foldExitTime ρ₁ < foldExitTime ρ₂ (more complementary → faster linearized exit)
+    simp only [foldExitTime]
+    have h2ρ₁ : 0 < 2 - ρ₁ := by linarith
+    have h2ρ₂ : 0 < 2 - ρ₂ := by linarith
+    exact div_lt_div_of_pos_left hε (by positivity) (by nlinarith)
+  · exact hK
+
+/-- **Network friction compresses asymmetry ratio (T5).** The ratio
+    τ_entry/τ_exit_eff is strictly less than τ_entry/τ_exit = (2-ρ)
+    when η > 0 and K > 0. Complementary sectors' asymmetry ratios are
+    compressed toward 1 by network friction. -/
+theorem networkFriction_compresses_asymmetry_ratio
+    {σ ε ρ η K : ℝ} (hσ : 0 < σ) (hε : 0 < ε) (hρ : ρ < 1)
+    (hη : 0 < η) (hK : 0 < K) :
+    networkFrictionAsymmetry σ ε ρ η K < foldEntryTime σ ε / foldExitTime σ ε ρ := by
+  simp only [networkFrictionAsymmetry, networkFrictionEntryTime, networkFrictionExitTime]
+  have hentry : 0 < foldEntryTime σ ε := by
+    simp only [foldEntryTime]; exact div_pos hε hσ
+  have h2ρ : 0 < 2 - ρ := by linarith
+  have hexit : 0 < foldExitTime σ ε ρ := by
+    simp only [foldExitTime]; exact div_pos hε (mul_pos hσ h2ρ)
+  have hηK : 0 < η * K := mul_pos hη hK
+  exact div_lt_div_of_pos_left hentry (by linarith) (by linarith [le_of_lt hexit])
+
+/-- **Curvature and linearized exit time are anti-correlated (T6).**
+    Lower ρ gives BOTH higher K (more curvature) AND lower τ_exit
+    (faster linearized exit). This anti-correlation is why network
+    friction (proportional to K) can reverse the ordering. -/
+theorem curvatureKReal_anti_correlated_with_exit_time
+    {σ ε ρ₁ ρ₂ J : ℝ}
+    (hσ : 0 < σ) (hε : 0 < ε) (hJ : 1 < J)
+    (_hρ₁ : ρ₁ < 1) (hρ₂ : ρ₂ < 1) (hρ : ρ₁ < ρ₂) :
+    foldExitTime σ ε ρ₁ < foldExitTime σ ε ρ₂ ∧
+    (1 - ρ₂) * (J - 1) / J < (1 - ρ₁) * (J - 1) / J := by
+  constructor
+  · -- Lower ρ → faster exit (smaller τ)
+    simp only [foldExitTime]
+    have h2ρ₁ : 0 < 2 - ρ₁ := by linarith
+    have h2ρ₂ : 0 < 2 - ρ₂ := by linarith
+    exact div_lt_div_of_pos_left hε (by positivity) (by nlinarith)
+  · -- Lower ρ → higher K
+    have hJpos : 0 < J := by linarith
+    have hJm1 : 0 < J - 1 := by linarith
+    apply div_lt_div_of_pos_right _ hJpos
+    exact mul_lt_mul_of_pos_right (by linarith) hJm1
+
+/-- **Linearized is zero-friction special case (T7).** At η = 0, the
+    effective exit ordering matches the linearized ordering. This shows
+    `fold_asymmetry_monotone` is correct but incomplete: it is the
+    η = 0 limit of the full network-friction model. -/
+theorem linearized_is_zero_friction_special_case
+    {σ ε ρ₁ ρ₂ K₁ K₂ : ℝ}
+    (hσ : 0 < σ) (hε : 0 < ε)
+    (_hρ₁ : ρ₁ < 1) (hρ₂ : ρ₂ < 1) (hρ : ρ₁ < ρ₂) :
+    networkFrictionExitTime σ ε ρ₁ 0 K₁ <
+    networkFrictionExitTime σ ε ρ₂ 0 K₂ := by
+  simp only [networkFrictionExitTime, zero_mul, add_zero]
+  simp only [foldExitTime]
+  have h2ρ₁ : 0 < 2 - ρ₁ := by linarith
+  have h2ρ₂ : 0 < 2 - ρ₂ := by linarith
+  exact div_lt_div_of_pos_left hε (by positivity) (by nlinarith)
+
+/-- The hysteresis traversal time adds a further delay to entry:
+    after fold collapse, the friction parameter must decrease by
+    the full hysteresis gap (proportional to K, from
+    `hysteresis_width_positive`) before recovery can begin. -/
+def hysteresisDelay (gap speed : ℝ) : ℝ := gap / speed
+
+/-- Total entry delay: the eigenvalue asymmetry is a lower bound,
+    and hysteresis traversal adds further delay on top. -/
+theorem total_entry_exceeds_exit (σ ε ρ gap speed : ℝ)
+    (hσ : 0 < σ) (hε : 0 < ε) (hρ : ρ < 1)
+    (hg : 0 < gap) (hs : 0 < speed) :
+    foldExitTime σ ε ρ <
+    foldEntryTime σ ε + hysteresisDelay gap speed := by
+  have h1 := exit_faster_than_entry σ ε ρ hσ hε hρ
+  have h2 : 0 < hysteresisDelay gap speed := div_pos hg hs
+  linarith
 
 -- ============================================================
 -- Corollary 3c.2: Mode-Specific J Warning

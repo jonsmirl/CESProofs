@@ -45,26 +45,143 @@ theorem symmetric_adjustment (e : NSectorEconomy N) :
     True := trivial
 
 -- ============================================================
--- Result 18: Onsager Testable Prediction (axiomatized)
+-- Matrix operations for Fin N → Fin N → ℝ
 -- ============================================================
 
-/-- **Result 18 (Onsager Testable Prediction)** — Section 4.2.
+/-- Matrix multiplication for function-represented matrices. -/
+def matMul (A B : Fin N → Fin N → ℝ) : Fin N → Fin N → ℝ :=
+  fun i j => ∑ k : Fin N, A i k * B k j
 
-    The symmetric adjustment (Result 17) yields a testable prediction:
-    the cross-response of sector n to a shock in sector m should equal
-    the cross-response of sector m to a shock in sector n.
+/-- Matrix transpose for function-represented matrices. -/
+def matTranspose (A : Fin N → Fin N → ℝ) : Fin N → Fin N → ℝ :=
+  fun i j => A j i
 
-    Test: impulse response analysis in VAR models. If L_{nm} != L_{mn},
-    the CES adjustment model is rejected.
+-- ============================================================
+-- Result 18: Commutator Decomposition (fully proved)
+-- ============================================================
 
-    **Proof.** Empirical prediction of the CES framework (Paper 3, Section 4.2). The symmetric
-    adjustment identity L_{nm} = L_{mn} from Result 17 implies that cross-sector impulse
-    responses in a structural VAR must be symmetric. Rejection of symmetry (via a Wald test
-    on the off-diagonal elements of the estimated L matrix) would falsify the CES adjustment
-    model. -/
-theorem onsager_testable (e : NSectorEconomy N) :
-    -- Cross-sector impulse responses should be symmetric
-    True := trivial
+/-- Symmetric matrix ↔ equal to its transpose. -/
+lemma matTranspose_of_symmetric (A : Fin N → Fin N → ℝ) (hA : IsSymmetricMatrix A) :
+    matTranspose A = A := by
+  ext i j; exact hA j i
+
+/-- Convert transpose equality to IsSymmetricMatrix. -/
+lemma isSymmetric_of_transpose_eq (A : Fin N → Fin N → ℝ)
+    (h : matTranspose A = A) :
+    IsSymmetricMatrix A := by
+  intro i j; exact congr_fun (congr_fun h j) i
+
+/-- Transpose of a product reverses the order: (AB)^T = B^T A^T. -/
+lemma matMul_transpose_general (A B : Fin N → Fin N → ℝ) :
+    matTranspose (matMul A B) = matMul (matTranspose B) (matTranspose A) := by
+  ext i j; simp only [matTranspose, matMul]
+  apply Finset.sum_congr rfl; intro k _; ring
+
+/-- Matrix multiplication is associative: (AB)C = A(BC). -/
+lemma matMul_assoc (A B C : Fin N → Fin N → ℝ) :
+    matMul (matMul A B) C = matMul A (matMul B C) := by
+  ext i j; simp only [matMul]
+  simp_rw [Finset.sum_mul, Finset.mul_sum]
+  rw [Finset.sum_comm]
+  congr 1; ext; congr 1; ext; ring
+
+/-- Key lemma: when L and H are both symmetric, (LH)^T = HL.
+    The transpose of the product reverses the order, but since
+    L^T = L and H^T = H, this gives HL instead of LH. -/
+lemma matMul_transpose_of_symm [NeZero N]
+    (L H : Fin N → Fin N → ℝ)
+    (hL : IsSymmetricMatrix L) (hH : IsSymmetricMatrix H) :
+    ∀ i j : Fin N, matTranspose (matMul L H) i j = matMul H L i j := by
+  intro i j
+  simp only [matTranspose, matMul]
+  apply Finset.sum_congr rfl
+  intro k _
+  rw [hL j k, hH k i]
+  ring
+
+/-- **Result 18 (Commutator Decomposition of VAR Asymmetry)** — Section 4.2.
+
+    Paper 3, Proposition (commutator). Near equilibrium, the VAR transition
+    matrix is A = L·H where L is the mobility matrix (symmetric by Result 17)
+    and H = nabla^2 F is the Hessian (symmetric by Schwarz). The antisymmetric
+    part of A equals one-half the commutator [L, H]:
+
+      antisymPart(A)_{ij} = (A_{ij} - A_{ji}) / 2 = ([L,H])_{ij} / 2
+
+    where [L, H] = LH - HL. This means:
+    - Naive VAR asymmetry ||A - A^T|| reflects non-commuting mobility and
+      curvature, NOT violation of Onsager reciprocity (Result 17).
+    - A is symmetric if and only if L and H commute: [L, H] = 0.
+    - Testing L = L^T requires structural identification, not reduced-form VARs.
+
+    The correct testable predictions from reduced-form VARs are:
+    (1) The symmetric part of A correlates with I-O structure (Leontief inverse).
+    (2) The antisymmetric part negatively correlates with directed I-O linkages
+        (demand-feedback reversal).
+
+    **Proof.** A^T = (LH)^T = H^T L^T = HL (since L = L^T and H = H^T).
+    Therefore A - A^T = LH - HL = [L, H]. Dividing by 2 gives the result. -/
+theorem commutator_decomposition [NeZero N]
+    (L H : Fin N → Fin N → ℝ)
+    (hL : IsSymmetricMatrix L) (hH : IsSymmetricMatrix H)
+    (i j : Fin N) :
+    antisymPart (matMul L H) i j =
+      (matMul L H i j - matMul H L i j) / 2 := by
+  simp only [antisymPart]
+  congr 1
+  have key : matMul L H j i = matMul H L i j := by
+    have := matMul_transpose_of_symm L H hL hH i j
+    simpa [matTranspose] using this
+  linarith [key]
+
+/-- The VAR transition matrix A = LH is symmetric if and only if L and H
+    commute (have the same eigenvectors). Proved direction: if LH = HL then
+    LH is symmetric. -/
+theorem var_symmetric_of_commute [NeZero N]
+    (L H : Fin N → Fin N → ℝ)
+    (hL : IsSymmetricMatrix L) (hH : IsSymmetricMatrix H)
+    (hcomm : ∀ i j, matMul L H i j = matMul H L i j) :
+    IsSymmetricMatrix (matMul L H) := by
+  intro i j
+  have key : matMul L H j i = matMul H L i j := by
+    have := matMul_transpose_of_symm L H hL hH i j
+    simpa [matTranspose] using this
+  rw [key, ← hcomm i j]
+
+-- ============================================================
+-- Result 18b: H-Symmetry (axiomatized)
+-- ============================================================
+
+/-- **Result 18b (H-Symmetry: the correct Onsager prediction for VARs)** — fully proved.
+
+    When L is symmetric (Result 17) and H is symmetric (Hessian), the VAR
+    transition matrix A = LH satisfies H-symmetry:
+
+      H^{-1} A^T H = A
+
+    That is, A is self-adjoint with respect to the H-inner product.
+
+    We prove the inverse-free equivalent: H·A = H·(L·H) is symmetric.
+    This is equivalent to H^{-1} A^T H = A when H is invertible, because:
+      H·A symmetric ⟺ (H·A)^T = H·A ⟺ A^T·H = H·A ⟺ H^{-1}·A^T·H = A.
+
+    This is the correct testable prediction from Onsager reciprocity for
+    reduced-form VARs, but it requires knowledge of H (the CES Hessian),
+    which depends on rho, factor shares, and scale — quantities not available
+    from reduced-form data alone.
+
+    **Proof.** (H·L·H)^T = H^T·(L·H)^T = H^T·H^T·L^T = H·H·L (using symmetry).
+    By associativity, H·H·L = H·(H·L) while H·L·H = H·(L·H), and
+    (H·L)·H = H·(L·H) by associativity. Full chain:
+    (H·(L·H))^T = (L·H)^T · H^T = (H^T·L^T) · H^T = (H·L)·H = H·(L·H). -/
+theorem h_product_symmetric
+    (L H : Fin N → Fin N → ℝ)
+    (hL : IsSymmetricMatrix L) (hH : IsSymmetricMatrix H) :
+    IsSymmetricMatrix (matMul H (matMul L H)) := by
+  apply isSymmetric_of_transpose_eq
+  rw [matMul_transpose_general, matMul_transpose_general,
+      matTranspose_of_symmetric L hL, matTranspose_of_symmetric H hH]
+  exact matMul_assoc H L H
 
 -- ============================================================
 -- Result 19: Minimum Misallocation (fully proved)

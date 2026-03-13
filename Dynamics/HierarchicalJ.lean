@@ -96,7 +96,14 @@ theorem diversity_can_activate {P_cycle : ℝ} (hP : 0 < P_cycle) :
     by the same factor. If the new P_cycle exceeds 1, level n+1's activation threshold is
     crossed, triggering its own fold bifurcation. The cascade propagates multiplicatively
     through the hierarchy. Requires the full coupled multi-level ODE system with timescale
-    separation (Fenichel 1979). -/
+    separation (Fenichel 1979).
+
+    **Empirical status (2026-03):** Tested with BEA Leontief total requirements matrix
+    weights across 19 NAICS sectors. Lagged upstream firm growth predicts downstream
+    growth in 11/19 sectors (58%, p = 0.648). Right sign but not significant — the
+    cascade signal may exist at finer industry granularity (3-digit NAICS) but is washed
+    out at the 2-digit level. See `test_endogenous_diversity.py`, subtest
+    `endogenous_diversity_leontief_cascades`. -/
 theorem endogenous_activation_cascade (N : ℕ) :
     -- Activation at level n increases k_{n,n-1}
     -- If this pushes P_cycle past 1, the next level activates
