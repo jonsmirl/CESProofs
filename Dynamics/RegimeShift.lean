@@ -18,27 +18,27 @@ noncomputable section
 -- ============================================================
 
 /-- **Theorem 3c.2 (Fold Bifurcation).**
-    As entry cost decreases (or friction T decreases), the
-    unstable equilibrium J_crit and the lower interior equilibrium
-    J_low approach each other. At the fold point, they merge
-    and disappear via a saddle-node bifurcation.
+    The per-capita surplus π_K(J) = (1-ρ)(J-1)/J² has a unique maximum
+    (1-ρ)/4 at J = 2 (from `perCapitaSurplus_le_peak`). This creates a
+    fold (saddle-node) bifurcation in the entry cost parameter κ:
 
-    The system then jumps discontinuously from J ~ 0 to J_high.
-    This is the formal version of Paper 6's Potts regime shift:
-    the first-order transition is mediated by the coordination
-    failure disappearing.
+    (i) For κ < (1-ρ)/4: two interior equilibria exist
+        (J_low ∈ [1,2] and J_high ≥ 2, from `multiple_equilibria_fold`).
+    (ii) For κ > (1-ρ)/4: no interior equilibrium exists
+        (surplus never reaches cost — this theorem).
+    (iii) At κ = (1-ρ)/4: the fold point, where equilibria merge at J = 2
+        (from `perCapitaSurplus_at_two`).
 
-    **Proof.** The entry-exit ODE dJ/dt = λ·max(0, V(J) - cost) - μ·J has a cubic-like
-    nullcline. As cost decreases, the two interior fixed points (J_crit, J_low) approach
-    each other along a saddle-node bifurcation curve. At the fold point, the Jacobian
-    has a zero eigenvalue with the transversality and non-degeneracy conditions of the
-    saddle-node bifurcation theorem (Kuznetsov 2004, Theorem 5.1). Beyond the fold,
-    the system jumps discontinuously to J_high — a first-order regime shift. -/
-theorem fold_bifurcation (ρ : ℝ) (hρ : ρ < 1) :
-    -- As cost decreases past a critical value:
-    -- J_crit and J_low merge (saddle-node)
-    -- System jumps from J ~ 0 to J_high (first-order transition)
-    True := trivial
+    Beyond the fold, the coordination failure disappears: the system jumps
+    discontinuously from J ≈ 0 to J_high, producing a first-order regime shift.
+
+    **Proof.** From `perCapitaSurplus_le_peak`, π_K(J) ≤ (1-ρ)/4 for all J > 1.
+    When κ exceeds this bound, no J > 1 can satisfy π_K(J) = κ. -/
+theorem fold_bifurcation {ρ κ : ℝ} (hρ : ρ < 1) (hκ : (1 - ρ) / 4 < κ) :
+    ∀ J : ℝ, 1 < J → perCapitaSurplus J ρ ≠ κ := by
+  intro J hJ
+  have h := perCapitaSurplus_le_peak hJ hρ
+  linarith
 
 /-- At the fold point, the value function V(J) is tangent to the cost line.
     This means V(J_fold) = cost simultaneously with V'(J_fold) ≥ 0.

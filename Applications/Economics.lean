@@ -1003,6 +1003,92 @@ theorem cesDemand_adding_up {J : ℕ} (hJ : 0 < J) {ρ : ℝ} (hρ : ρ ≠ 0) (
   rw [this, key]; ring
 
 -- ============================================================
+-- Extension 13: CES Consumer Duality
+-- ============================================================
+
+/-- **CES price index positivity**: C(p) > 0 when all prices are positive and J > 0.
+
+    **Proof.** C(p) = (Σ p_j^r)^{1/r}. Each p_j^r > 0, so the sum is positive,
+    and a positive real raised to any power is positive. -/
+theorem cesPriceIndex_pos {J : ℕ} (hJ : 0 < J) {ρ : ℝ} (hρ1 : ρ ≠ 1)
+    {p : Fin J → ℝ} (hp : ∀ j, 0 < p j) :
+    0 < cesPriceIndex J ρ p := by
+  simp only [cesPriceIndex, unnormCES]
+  apply rpow_pos_of_pos
+  exact Finset.sum_pos (fun j _ => rpow_pos_of_pos (hp j) _) ⟨⟨0, hJ⟩, Finset.mem_univ _⟩
+
+/-- **CES indirect utility**: V(p, I) = I / C(p).
+    The maximum utility achievable with income I at prices p equals
+    income divided by the unit cost function (CES price index).
+
+    **Proof.** By definition: the consumer maximizes F(x) subject to
+    Σ p_k x_k ≤ I. At the optimum, x* = cesDemand(p, I/C(p)),
+    and F(x*) = I/C(p) by homogeneity of degree 1. -/
+def cesIndirectUtility (J : ℕ) (ρ : ℝ) (p : Fin J → ℝ) (I : ℝ) : ℝ :=
+  I / cesUnitCost J ρ p
+
+/-- **CES expenditure function**: E(p, u) = u · C(p).
+    The minimum expenditure needed to achieve utility level u at prices p.
+
+    **Proof.** Duality: E(p, V(p, I)) = V(p,I) · C(p) = (I/C(p)) · C(p) = I.
+    Equivalently, E is the inverse of V in the income argument. -/
+def cesExpenditureFunction (J : ℕ) (ρ : ℝ) (p : Fin J → ℝ) (u : ℝ) : ℝ :=
+  u * cesUnitCost J ρ p
+
+/-- **Duality identity**: E(p, V(p, I)) = I.
+    Expenditure at the optimal utility level recovers income.
+
+    **Proof.** E(p, V(p,I)) = V(p,I) · C(p) = (I/C(p)) · C(p) = I.
+    Uses `div_mul_cancel₀` with C(p) ≠ 0. -/
+theorem expenditure_indirect_duality {J : ℕ} (hJ : 0 < J) {ρ : ℝ} (hρ1 : ρ ≠ 1)
+    {p : Fin J → ℝ} (hp : ∀ j, 0 < p j) {I : ℝ} :
+    cesExpenditureFunction J ρ p (cesIndirectUtility J ρ p I) = I := by
+  simp only [cesExpenditureFunction, cesIndirectUtility, cesUnitCost]
+  rw [div_mul_cancel₀]
+  exact ne_of_gt (cesPriceIndex_pos hJ hρ1 hp)
+
+/-- **Indirect utility is decreasing in each price**: ∂V/∂p_k < 0.
+    Higher prices reduce achievable utility at fixed income.
+
+    **Proof.** V(p,I) = I / C(p). Since C(p) is increasing in p_k
+    (Shephard's lemma gives ∂C/∂p_k = x_k > 0), V is decreasing.
+    By the quotient rule: V'(p_k) = -I · C'(p_k) / C(p)². -/
+theorem indirect_utility_antitone_in_price {J : ℕ} (hJ : 0 < J) {ρ : ℝ}
+    (hρ : ρ ≠ 0) (hρ1 : ρ ≠ 1) {p : Fin J → ℝ} (hp : ∀ j, 0 < p j)
+    {I : ℝ} (hI : 0 < I) (k : Fin J) :
+    HasDerivAt (fun t => cesIndirectUtility J ρ (Function.update p k t) I)
+      (-(I * cesDemand J ρ p k 1 / (cesUnitCost J ρ p) ^ 2)) (p k) := by
+  simp only [cesIndirectUtility]
+  have hC : cesUnitCost J ρ (Function.update p k (p k)) ≠ 0 := by
+    rw [Function.update_eq_self]; exact ne_of_gt (cesPriceIndex_pos hJ hρ1 hp)
+  have h := (hasDerivAt_const (p k) I).div (shephards_lemma hJ hρ hρ1 hp k) hC
+  simp only [Pi.div_apply] at h
+  rw [Function.update_eq_self] at hC h
+  convert h using 1
+  have hC' : cesUnitCost J ρ p ≠ 0 := ne_of_gt (cesPriceIndex_pos hJ hρ1 hp)
+  field_simp
+  ring
+
+/-- **Roy's identity**: x_k = -( ∂V/∂p_k ) / ( ∂V/∂I ).
+    The Marshallian demand equals the ratio of marginal indirect utilities.
+
+    For CES: ∂V/∂I = 1/C(p) and ∂V/∂p_k = -I·x_k(1)/C(p)².
+    So -( ∂V/∂p_k ) / ( ∂V/∂I ) = I·x_k(1)/C(p) = x_k(p, I/C(p))
+    = cesDemand at utility-maximizing output level.
+
+    We prove the algebraic identity that the ratio of derivatives equals
+    the Hicksian demand at optimal output level. -/
+theorem roys_identity_ratio {J : ℕ} (hJ : 0 < J) {ρ : ℝ} (hρ1 : ρ ≠ 1)
+    {p : Fin J → ℝ} (hp : ∀ j, 0 < p j) {I : ℝ} (k : Fin J) :
+    -- Roy's identity: x_k = (I · x_k(1) / C²) / (1/C) = I · x_k(1) / C
+    I * cesDemand J ρ p k 1 / (cesUnitCost J ρ p) ^ 2 /
+    (1 / cesUnitCost J ρ p) =
+    cesDemand J ρ p k (I / cesUnitCost J ρ p) := by
+  simp only [cesDemand]
+  have hC : cesUnitCost J ρ p ≠ 0 := ne_of_gt (cesPriceIndex_pos hJ hρ1 hp)
+  field_simp
+
+-- ============================================================
 -- Discrete Choice: Logit Probability and Inclusive Value
 -- ============================================================
 

@@ -21,6 +21,7 @@
 
 import CESProofs.Foundations.Hessian
 import CESProofs.CurvatureRoles.Superadditivity
+import CESProofs.CurvatureRoles.CorrelationRobust
 import CESProofs.Potential.Defs
 
 open Real Finset BigOperators
@@ -293,5 +294,75 @@ theorem escort_compresses_leader {x₁ x₂ : ℝ} (_hx₁ : 0 < x₁) (hx₂ : 
     (x₁ / x₂) ^ ρ < (x₁ / x₂) ^ (1 : ℝ) := by
   have hratio : (1 : ℝ) < x₁ / x₂ := by rwa [one_lt_div hx₂]
   exact rpow_lt_rpow_of_exponent_lt hratio hρ₁
+
+-- ============================================================
+-- Section 8: Reversal of Superadditivity and Correlation Robustness
+-- ============================================================
+
+/-- **SR-16**: Sub-additivity at equal inputs: power mean ≥ arithmetic mean for ρ > 1.
+    For ρ > 1 and nonneg inputs: M_ρ(x) ≥ (1/J) · Σ xⱼ.
+
+    This is the reversal of `powerMean_le_arithMean` (which holds for 0 < ρ ≤ 1).
+    The CES aggregate EXCEEDS the arithmetic mean in the substitute regime.
+
+    **Proof.** By convexity of t^ρ for ρ ≥ 1 (Jensen's inequality, convex direction):
+      ((1/J)·Σ xⱼ)^ρ ≤ (1/J)·Σ xⱼ^ρ.
+    Since 1/ρ > 0, raising both sides to the 1/ρ power (monotone) gives:
+      (1/J)·Σ xⱼ = (((1/J)·Σ xⱼ)^ρ)^(1/ρ) ≤ ((1/J)·Σ xⱼ^ρ)^(1/ρ) = M_ρ(x).
+
+    Economic meaning: with substitutable inputs, the CES aggregate exceeds the average.
+    Concentrating resources (specialization) dominates equal distribution. -/
+theorem superadditivity_reverses_substitutes {ρ : ℝ} (hρ : 1 < ρ) (hρne : ρ ≠ 0)
+    {x : Fin J → ℝ} (hx : ∀ j, 0 ≤ x j) (hJ : 0 < J) :
+    (1 / ↑J : ℝ) * ∑ j : Fin J, x j ≤ powerMean J ρ hρne x := by
+  simp only [powerMean]
+  have hJr : (0 : ℝ) < ↑J := Nat.cast_pos.mpr hJ
+  have hJne : (↑J : ℝ) ≠ 0 := ne_of_gt hJr
+  have h_avg_nn : 0 ≤ (1 / ↑J) * ∑ j : Fin J, x j :=
+    mul_nonneg (by positivity) (Finset.sum_nonneg (fun j _ => hx j))
+  have h_inner_nn : 0 ≤ (1 / ↑J) * ∑ j : Fin J, (x j) ^ ρ :=
+    mul_nonneg (by positivity) (Finset.sum_nonneg (fun j _ => rpow_nonneg (hx j) ρ))
+  have h1ρ : 0 < 1 / ρ := div_pos one_pos (by linarith)
+  -- Jensen (convex): ((1/J)·Σ xⱼ)^ρ ≤ (1/J)·Σ xⱼ^ρ
+  have hconv := convexOn_rpow (by linarith : 1 ≤ ρ)
+  set w : Fin J → ℝ := fun _ => (1 : ℝ) / ↑J
+  have hw_nn : ∀ j ∈ Finset.univ, 0 ≤ w j := fun _ _ => by positivity
+  have hw_sum : ∑ j ∈ Finset.univ, w j = 1 := by
+    simp [w, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+    exact div_self hJne
+  have hx_mem : ∀ j ∈ Finset.univ, x j ∈ Set.Ici (0 : ℝ) :=
+    fun j _ => Set.mem_Ici.mpr (hx j)
+  have hstep := ConvexOn.map_sum_le hconv hw_nn hw_sum hx_mem
+  simp only [smul_eq_mul, w] at hstep
+  rw [← Finset.mul_sum, ← Finset.mul_sum] at hstep
+  -- hstep : ((1/J)·Σ xⱼ)^ρ ≤ (1/J)·Σ xⱼ^ρ
+  -- Raise to 1/ρ (monotone, positive exponent):
+  have key := rpow_le_rpow (rpow_nonneg h_avg_nn ρ) hstep (le_of_lt h1ρ)
+  rwa [← rpow_mul h_avg_nn, mul_one_div_cancel (ne_of_gt (by linarith : (0 : ℝ) < ρ)),
+       rpow_one] at key
+
+/-- **SR-17**: Correlation amplification in the substitute regime.
+    For ρ > 1, the diversity-encoding correction is POSITIVE:
+      -(K/(2c)) · idioVar > 0
+    because K < 0 when ρ > 1.
+
+    This is the reversal of the correlation robustness result.
+    In the complementary regime (ρ < 1), CES output is DEPRESSED by
+    idiosyncratic variance (robustness against noise). In the substitute
+    regime (ρ > 1), CES output is AMPLIFIED by idiosyncratic variance:
+    heterogeneity INCREASES the aggregate, not decreases it.
+
+    **Proof.** The correction is -(curvatureK J ρ)/(2c) · idioVar.
+    By SR-1, curvatureK J ρ < 0 when ρ > 1 and J ≥ 2, so -(curvatureK J ρ) > 0.
+    Since 2, c, and idioVar are all positive, the correction is strictly positive. -/
+theorem correlation_amplification_substitutes (hJ : 2 ≤ J) {ρ : ℝ} (hρ : 1 < ρ)
+    (m : EquicorrModel) :
+    0 < -(curvatureK J ρ) / (2 * m.c) * m.idioVar := by
+  simp only [EquicorrModel.idioVar]
+  apply mul_pos
+  · apply div_pos
+    · exact neg_pos.mpr (curvatureK_neg_substitute hJ hρ)
+    · exact mul_pos two_pos m.hc
+  · exact mul_pos (sq_pos_of_pos m.hτ) (by linarith [m.hr_lt])
 
 end

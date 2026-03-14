@@ -397,4 +397,252 @@ theorem fitness_advantage_expands_basin {ρ : ℝ} (hρ : 1 < ρ)
   exact Real.one_lt_rpow ((one_lt_div hωj).mpr hadv)
     (amplification_pos hρ)
 
+-- ============================================================
+-- Part F: Rent Dissipation and the Dissipation-Curvature Duality
+-- ============================================================
+
+/-- The dissipation ratio in a symmetric J-player Tullock contest
+    with discriminatory power ρ:
+      D(ρ, J) = ρ · (J-1) / J.
+
+    At symmetric Nash equilibrium with prize V, each player exerts
+    effort x* = ρ(J-1)V/J², so total expenditure = D · V.
+
+    This is the fraction of the prize value consumed by competition. -/
+def dissipationRatio (J : ℕ) (ρ : ℝ) : ℝ := ρ * (↑J - 1) / ↑J
+
+/-- **Dissipation-Curvature Duality**: D + K = (J-1)/J.
+
+    Rent dissipation and CES curvature are complementary fractions
+    of the competition potential (J-1)/J. Curvature K measures
+    how much goes to productive surplus; dissipation D measures
+    how much is wasted in rent-seeking. Together they exhaust
+    the competition potential.
+
+    This reveals K's role as **rent protector**: each unit of
+    curvature shields one unit of surplus from competitive waste.
+    The duality connects the geometric (curvature) and
+    game-theoretic (rent dissipation) views of the same parameter.
+
+    **Proof.** D + K = ρ(J-1)/J + (1-ρ)(J-1)/J = (J-1)/J. -/
+theorem dissipation_curvature_duality (hJ : 1 ≤ J) (ρ : ℝ) :
+    dissipationRatio J ρ + curvatureK J ρ = (↑J - 1) / ↑J := by
+  simp only [dissipationRatio, curvatureK]
+  have hJne : (↑J : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+  field_simp
+  ring
+
+/-- Curvature is the complement of dissipation:
+    K = (J-1)/J - D.
+    Higher curvature → less rent-seeking waste. -/
+theorem curvature_complement_dissipation (hJ : 1 ≤ J) (ρ : ℝ) :
+    curvatureK J ρ = (↑J - 1) / ↑J - dissipationRatio J ρ := by
+  linarith [dissipation_curvature_duality hJ ρ]
+
+/-- Dissipation is the complement of curvature:
+    D = (J-1)/J - K. -/
+theorem dissipation_complement_curvature (hJ : 1 ≤ J) (ρ : ℝ) :
+    dissipationRatio J ρ = (↑J - 1) / ↑J - curvatureK J ρ := by
+  linarith [dissipation_curvature_duality hJ ρ]
+
+/-- Under-dissipation for complements: ρ < 1 → D < (J-1)/J.
+    Complementary inputs reduce competitive waste below the maximum.
+
+    **Proof.** D = ρ(J-1)/J < (J-1)/J since ρ < 1 and (J-1)/J > 0. -/
+theorem underdissipation_complements (hJ : 2 ≤ J) {ρ : ℝ}
+    (_hρ0 : 0 ≤ ρ) (hρ1 : ρ < 1) :
+    dissipationRatio J ρ < (↑J - 1) / ↑J := by
+  simp only [dissipationRatio]
+  have hJpos : (0 : ℝ) < ↑J := by exact_mod_cast (by omega : 0 < J)
+  have hJm1 : (0 : ℝ) < ↑J - 1 := by
+    have : (1 : ℝ) < ↑J := by exact_mod_cast (by omega : 1 < J)
+    linarith
+  exact div_lt_div_of_pos_right (by nlinarith) hJpos
+
+/-- Under-dissipation implies D < 1 for complements (total
+    expenditure is less than the prize). -/
+theorem dissipation_lt_one_complements (hJ : 2 ≤ J) {ρ : ℝ}
+    (hρ0 : 0 ≤ ρ) (hρ1 : ρ < 1) :
+    dissipationRatio J ρ < 1 := by
+  unfold dissipationRatio
+  have hJpos : (0 : ℝ) < ↑J := by exact_mod_cast (by omega : 0 < J)
+  rw [div_lt_one hJpos]
+  have hJm1 : (0 : ℝ) ≤ ↑J - 1 := by
+    have : (1 : ℝ) ≤ ↑J := by exact_mod_cast (by omega : 1 ≤ J)
+    linarith
+  nlinarith
+
+/-- Full dissipation at ρ = 1 (Cournot benchmark):
+    D = (J-1)/J. The standard result from Cournot competition. -/
+theorem full_dissipation_cournot (_hJ : 1 ≤ J) :
+    dissipationRatio J 1 = (↑J - 1) / ↑J := by
+  simp [dissipationRatio, one_mul]
+
+/-- Over-dissipation threshold: D > 1 iff ρ > J/(J-1).
+    When discriminatory power exceeds this threshold, total
+    expenditure exceeds the prize value — the contest is
+    unsustainable in pure strategies.
+
+    **Proof.** D = ρ(J-1)/J > 1 ⟺ ρ > J/(J-1). -/
+theorem overdissipation_iff (hJ : 2 ≤ J) {ρ : ℝ} (_hρ : 0 < ρ) :
+    1 < dissipationRatio J ρ ↔ ↑J / (↑J - 1) < ρ := by
+  simp only [dissipationRatio]
+  have hJpos : (0 : ℝ) < ↑J := by exact_mod_cast (by omega : 0 < J)
+  have hJm1 : (0 : ℝ) < ↑J - 1 := by
+    have : (1 : ℝ) < ↑J := by exact_mod_cast (by omega : 1 < J)
+    linarith
+  rw [lt_div_iff₀ hJpos, div_lt_iff₀ hJm1]
+  constructor
+  · intro h; nlinarith
+  · intro h; nlinarith
+
+/-- Dissipation is non-negative when ρ ≥ 0 and J ≥ 1. -/
+theorem dissipation_nonneg (hJ : 1 ≤ J) {ρ : ℝ} (hρ : 0 ≤ ρ) :
+    0 ≤ dissipationRatio J ρ := by
+  unfold dissipationRatio
+  apply div_nonneg
+  · apply mul_nonneg hρ
+    exact sub_nonneg.mpr (by exact_mod_cast hJ)
+  · exact_mod_cast (by omega : 0 ≤ J)
+
+-- ============================================================
+-- Part G: Equilibrium Effort and Payoff
+-- ============================================================
+
+/-- Symmetric Nash equilibrium effort level in a Tullock contest
+    with J symmetric players, discriminatory power ρ, and prize V:
+      x* = ρ(J-1)V / J². -/
+def contestEquilEffort (J : ℕ) (ρ V : ℝ) : ℝ :=
+  ρ * (↑J - 1) * V / ↑J ^ 2
+
+/-- Total equilibrium expenditure equals D · V:
+      J · x* = D(ρ,J) · V.
+
+    **Proof.** J · ρ(J-1)V/J² = ρ(J-1)V/J = D · V. -/
+theorem total_expenditure_eq (hJ : 0 < J) (ρ V : ℝ) :
+    ↑J * contestEquilEffort J ρ V = dissipationRatio J ρ * V := by
+  simp only [contestEquilEffort, dissipationRatio]
+  have hJne : (↑J : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+  field_simp
+
+/-- Equilibrium payoff per player:
+      Π* = V/J - x* = V(1 - D) / J.
+
+    The surviving surplus (1 - D) is shared equally. Since
+    D + K = (J-1)/J, we have 1 - D = 1/J + K, so:
+      Π* = V(1/J + K) / J = V/(J²) + V·K/J.
+
+    The first term is the "minimum rent" (present even at K = 0);
+    the second term is the "curvature dividend" — the surplus
+    that K protects from competitive waste. -/
+def contestEquilPayoff (J : ℕ) (ρ V : ℝ) : ℝ :=
+  V / ↑J - contestEquilEffort J ρ V
+
+/-- Equilibrium payoff equals V(1 - D)/J. -/
+theorem equil_payoff_formula (hJ : 0 < J) (ρ V : ℝ) :
+    contestEquilPayoff J ρ V =
+    V * (1 - dissipationRatio J ρ) / ↑J := by
+  simp only [contestEquilPayoff, contestEquilEffort, dissipationRatio]
+  have hJne : (↑J : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+  field_simp
+
+/-- **Curvature dividend**: Equilibrium payoff decomposes as
+      Π* = V/J² + V·K/J.
+
+    The first term V/J² is the minimum rent (independent of K).
+    The second term V·K/J is the curvature dividend — surplus
+    protected from dissipation by complementarity.
+
+    **Proof.** Π* = V(1-D)/J = V(1/J + K)/J (using 1-D = 1/J + K
+    from the duality D + K = (J-1)/J), = V/J² + V·K/J. -/
+theorem curvature_dividend (hJ : 1 ≤ J) (ρ V : ℝ) :
+    contestEquilPayoff J ρ V =
+    V / ↑J ^ 2 + V * curvatureK J ρ / ↑J := by
+  simp only [contestEquilPayoff, contestEquilEffort, curvatureK]
+  have hJne : (↑J : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+  field_simp
+  ring
+
+/-- Equilibrium payoff is positive for complements (ρ ∈ [0,1)):
+    each player earns a positive net surplus. -/
+theorem equil_payoff_pos_complements {ρ : ℝ} (hJ : 2 ≤ J)
+    (hρ0 : 0 ≤ ρ) (hρ1 : ρ < 1) {V : ℝ} (hV : 0 < V) :
+    0 < contestEquilPayoff J ρ V := by
+  rw [equil_payoff_formula (by omega)]
+  apply div_pos
+  · exact mul_pos hV (by linarith [dissipation_lt_one_complements hJ hρ0 hρ1])
+  · exact_mod_cast (by omega : 0 < J)
+
+/-- At Cournot benchmark (ρ = 1), payoff is V/J² — the
+    minimum rent with no curvature dividend. -/
+theorem equil_payoff_cournot (hJ : 1 ≤ J) (V : ℝ) :
+    contestEquilPayoff J 1 V = V / ↑J ^ 2 := by
+  rw [curvature_dividend hJ]
+  simp [curvatureK]
+
+-- ============================================================
+-- Part H: Skaperdas Axiomatization Connection
+-- ============================================================
+
+/-- The Tullock contest success function satisfies **homogeneity
+    of degree 0**: scaling all efforts does not change
+    win probabilities.
+
+    This is one of the Skaperdas (1996) axioms. Combined with
+    IIA (proved in TenWayIdentity.lean) and monotonicity, these
+    axioms uniquely characterize the power-form CSF — which IS
+    the CES share function.
+
+    **Proof.** s_j(c*x) = a_j(c*x_j)^p / S_k a_k(c*x_k)^p
+    = c^p a_j x_j^p / (c^p S_k a_k x_k^p) = s_j(x). -/
+theorem contestShare_homogeneous (a x : Fin J → ℝ)
+    (hx : ∀ j, 0 < x j) (ρ : ℝ) {c : ℝ} (hc : 0 < c)
+    (j : Fin J)
+    (_hS : 0 < ∑ k : Fin J, a k * x k ^ ρ) :
+    contestShare a (fun k => c * x k) ρ j =
+    contestShare a x ρ j := by
+  simp only [contestShare]
+  have hcρ : 0 < c ^ ρ := rpow_pos_of_pos hc ρ
+  have hrw : ∀ k : Fin J, a k * (c * x k) ^ ρ =
+      c ^ ρ * (a k * x k ^ ρ) := by
+    intro k; rw [mul_rpow (le_of_lt hc) (le_of_lt (hx k))]; ring
+  simp_rw [hrw, ← Finset.mul_sum]
+  exact mul_div_mul_left _ _ (ne_of_gt hcρ)
+
+/-- The Tullock CSF is **monotone**: higher effort at symmetric
+    equilibrium raises win probability above 1/J.
+
+    This is the second Skaperdas axiom. For the general asymmetric
+    case, monotonicity holds when rho > 0.
+
+    **Proof.** At symmetric equilibrium (all x_k = x0, all a_k = a0),
+    s_j = 1/J. A unilateral increase x_j = x0 + d with d > 0 gives
+    s_j = (x0+d)^rho / [(x0+d)^rho + (J-1)x0^rho] > 1/J since the
+    numerator grows while the non-j terms are unchanged. -/
+theorem contestShare_monotone_symmetric
+    {a₀ x₀ : ℝ} (ha : 0 < a₀) (hx : 0 < x₀)
+    {ρ : ℝ} (hρ : 0 < ρ) (hJ : 2 ≤ J)
+    {d : ℝ} (hd : 0 < d) :
+    1 / ↑J < a₀ * (x₀ + d) ^ ρ /
+      (a₀ * (x₀ + d) ^ ρ + (↑J - 1) * (a₀ * x₀ ^ ρ)) := by
+  have hxd : 0 < x₀ + d := by linarith
+  have hxρ : 0 < x₀ ^ ρ := rpow_pos_of_pos hx ρ
+  have hxdρ : 0 < (x₀ + d) ^ ρ := rpow_pos_of_pos hxd ρ
+  have haxdρ : 0 < a₀ * (x₀ + d) ^ ρ := mul_pos ha hxdρ
+  have haxρ : 0 < a₀ * x₀ ^ ρ := mul_pos ha hxρ
+  have hJgt1 : (1 : ℝ) < ↑J := by exact_mod_cast (by omega : 1 < J)
+  have hJm1_pos : (0 : ℝ) < ↑J - 1 := by linarith
+  have hden : 0 < a₀ * (x₀ + d) ^ ρ + (↑J - 1) * (a₀ * x₀ ^ ρ) :=
+    add_pos haxdρ (mul_pos hJm1_pos haxρ)
+  rw [div_lt_div_iff₀ (by exact_mod_cast (by omega : 0 < J) : (0:ℝ) < ↑J) hden]
+  -- Goal: 1 * den < num * J, i.e., (J-1)*a₀*x₀^ρ < (J-1)*a₀*(x₀+d)^ρ
+  simp only [one_mul]
+  have key : x₀ ^ ρ < (x₀ + d) ^ ρ :=
+    rpow_lt_rpow (le_of_lt hx) (by linarith) hρ
+  have h1 : a₀ * x₀ ^ ρ < a₀ * (x₀ + d) ^ ρ :=
+    mul_lt_mul_of_pos_left key ha
+  have h2 : (↑J - 1) * (a₀ * x₀ ^ ρ) < (↑J - 1) * (a₀ * (x₀ + d) ^ ρ) :=
+    mul_lt_mul_of_pos_left h1 hJm1_pos
+  linarith
+
 end
