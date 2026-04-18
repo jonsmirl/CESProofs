@@ -11,6 +11,8 @@
 import CESProofs.Potential.Defs
 import CESProofs.Potential.EffectiveCurvature
 import Mathlib.Analysis.Calculus.Deriv.MeanValue
+import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
+import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 
 open Real Finset BigOperators
 
@@ -296,6 +298,227 @@ def LyapunovProperty.of_bounded {J : ℕ} (q T : ℝ)
     unique_minimizer := trivial }
 
 -- cesPotential_bounded: removed (dead axiom, provable from simplex compactness but never used downstream)
+
+-- ============================================================
+-- Concrete gradient + `IsGradientFlow` constructor
+-- (Discharges the `future pass` caveat on the abstract Lyapunov theorems.)
+-- ============================================================
+
+/-- **Explicit `j`-th partial of `cesPotential`** at input `p` with payoff
+    `ε`, parameters `q`, `T`. The formula depends on the q-regime:
+
+      * `q = 1` (Shannon): `∂Φ/∂p_j = ε_j + T · (log p_j + 1)`.
+      * `q ≠ 1` (Tsallis):  `∂Φ/∂p_j = ε_j + T · q/(q−1) · p_j^(q−1)`.
+
+    Both require `0 < p_j` for smooth differentiability (`log` needs
+    positivity; `rpow_const` accepts `p_j ≠ 0 ∨ 1 ≤ q-1`, and we match
+    the former branch via strict positivity). -/
+noncomputable def cesPotentialGrad (J : ℕ) (q T : ℝ)
+    (ε : Fin J → ℝ) (p : Fin J → ℝ) (j : Fin J) : ℝ :=
+  if q = 1 then
+    ε j + T * (Real.log (p j) + 1)
+  else
+    ε j + T * q / (q - 1) * (p j) ^ (q - 1)
+
+/-- `j`-th partial of `tsallisEntropy` (the entropy-only component;
+    `cesPotentialGrad = ε - T · tsallisGradTerm`). -/
+noncomputable def tsallisGradTerm (q : ℝ) {J : ℕ}
+    (p : Fin J → ℝ) (j : Fin J) : ℝ :=
+  if q = 1 then
+    -(Real.log (p j) + 1)
+  else
+    -q / (q - 1) * (p j) ^ (q - 1)
+
+/-- Chain rule for `tsallisEntropy` along a positive-orthant trajectory
+    in the Tsallis (`q ≠ 1`) regime. -/
+private lemma tsallisEntropy_hasDerivAt_tsallis {J : ℕ} {q : ℝ} (hq : q ≠ 1)
+    {p : ℝ → Fin J → ℝ} {v : Fin J → ℝ} {t : ℝ}
+    (hp_pos : ∀ j, 0 < p t j)
+    (hp_deriv : ∀ j, HasDerivAt (fun s => p s j) (v j) t) :
+    HasDerivAt (fun s => tsallisEntropy J q (p s))
+               (∑ j, (-q / (q - 1)) * (p t j) ^ (q - 1) * v j) t := by
+  have h_eq : ∀ s, tsallisEntropy J q (p s) = (1 - ∑ j, (p s j) ^ q) / (q - 1) := by
+    intro s
+    unfold tsallisEntropy
+    rw [if_neg hq]
+  rw [show (fun s => tsallisEntropy J q (p s)) =
+         (fun s => (1 - ∑ j, (p s j) ^ q) / (q - 1)) from funext h_eq]
+  have h_sum : HasDerivAt (fun s => ∑ j, (p s j) ^ q)
+               (∑ j, v j * q * (p t j) ^ (q - 1)) t := by
+    apply HasDerivAt.fun_sum
+    intro j _
+    exact HasDerivAt.rpow_const (hp_deriv j) (Or.inl (ne_of_gt (hp_pos j)))
+  have h_1_sub : HasDerivAt (fun s => 1 - ∑ j, (p s j) ^ q)
+                 (-(∑ j, v j * q * (p t j) ^ (q - 1))) t := by
+    have h0 : HasDerivAt (fun _ : ℝ => (1 : ℝ)) 0 t := hasDerivAt_const t 1
+    have := h0.sub h_sum
+    simpa using this
+  have h_div : HasDerivAt (fun s => (1 - ∑ j, (p s j) ^ q) / (q - 1))
+               (-(∑ j, v j * q * (p t j) ^ (q - 1)) / (q - 1)) t :=
+    h_1_sub.div_const (q - 1)
+  -- Show the target derivative expression equals the one from h_div.
+  have hq1 : (q - 1 : ℝ) ≠ 0 := sub_ne_zero.mpr hq
+  have h_eq_deriv :
+      ∑ j : Fin J, (-q / (q - 1)) * (p t j) ^ (q - 1) * v j =
+      -(∑ j, v j * q * (p t j) ^ (q - 1)) / (q - 1) := by
+    rw [eq_div_iff hq1, Finset.sum_mul, ← Finset.sum_neg_distrib]
+    refine Finset.sum_congr rfl (fun j _ => ?_)
+    field_simp
+  rw [h_eq_deriv]
+  exact h_div
+
+/-- Chain rule for `tsallisEntropy` along a positive-orthant trajectory
+    in the Shannon (`q = 1`) regime. -/
+private lemma tsallisEntropy_hasDerivAt_shannon {J : ℕ}
+    {p : ℝ → Fin J → ℝ} {v : Fin J → ℝ} {t : ℝ}
+    (hp_pos : ∀ j, 0 < p t j)
+    (hp_deriv : ∀ j, HasDerivAt (fun s => p s j) (v j) t) :
+    HasDerivAt (fun s => tsallisEntropy J 1 (p s))
+               (∑ j, -(Real.log (p t j) + 1) * v j) t := by
+  have h_eq : ∀ s, tsallisEntropy J 1 (p s) = -∑ j, p s j * Real.log (p s j) := by
+    intro s
+    unfold tsallisEntropy
+    rw [if_pos rfl]
+  rw [show (fun s => tsallisEntropy J 1 (p s)) =
+         (fun s => -∑ j, p s j * Real.log (p s j)) from funext h_eq]
+  have h_term : ∀ j : Fin J, HasDerivAt (fun s => p s j * Real.log (p s j))
+                            (v j * (Real.log (p t j) + 1)) t := by
+    intro j
+    have hp_ne : p t j ≠ 0 := ne_of_gt (hp_pos j)
+    have h_log : HasDerivAt (fun s => Real.log (p s j)) (v j / p t j) t :=
+      (hp_deriv j).log hp_ne
+    have h_prod := (hp_deriv j).mul h_log
+    convert h_prod using 1
+    field_simp
+  have h_sum : HasDerivAt (fun s => ∑ j, p s j * Real.log (p s j))
+                          (∑ j, v j * (Real.log (p t j) + 1)) t :=
+    HasDerivAt.fun_sum (fun j _ => h_term j)
+  have h_neg := h_sum.neg
+  -- Show target derivative equals -∑ j, v j * (log + 1).
+  have h_eq_deriv :
+      ∑ j : Fin J, -(Real.log (p t j) + 1) * v j =
+      -∑ j, v j * (Real.log (p t j) + 1) := by
+    rw [← Finset.sum_neg_distrib]
+    refine Finset.sum_congr rfl (fun j _ => ?_)
+    ring
+  rw [h_eq_deriv]
+  exact h_neg
+
+/-- **Chain rule for `tsallisEntropy` along a positive-orthant trajectory.**
+    Combines the Shannon (`q = 1`) and Tsallis (`q ≠ 1`) cases via the
+    `tsallisGradTerm` definition. -/
+theorem tsallisEntropy_hasDerivAt_along_trajectory {J : ℕ} {q : ℝ}
+    {p : ℝ → Fin J → ℝ} {v : Fin J → ℝ} {t : ℝ}
+    (hp_pos : ∀ j, 0 < p t j)
+    (hp_deriv : ∀ j, HasDerivAt (fun s => p s j) (v j) t) :
+    HasDerivAt (fun s => tsallisEntropy J q (p s))
+               (∑ j, tsallisGradTerm q (p t) j * v j) t := by
+  by_cases hq : q = 1
+  · subst hq
+    have h := tsallisEntropy_hasDerivAt_shannon hp_pos hp_deriv
+    have h_reshape :
+        ∑ j : Fin J, tsallisGradTerm 1 (p t) j * v j =
+        ∑ j : Fin J, -(Real.log (p t j) + 1) * v j := by
+      refine Finset.sum_congr rfl (fun j _ => ?_)
+      simp [tsallisGradTerm]
+    rw [h_reshape]
+    exact h
+  · have h := tsallisEntropy_hasDerivAt_tsallis hq hp_pos hp_deriv
+    have h_reshape :
+        ∑ j : Fin J, tsallisGradTerm q (p t) j * v j =
+        ∑ j : Fin J, (-q / (q - 1)) * (p t j) ^ (q - 1) * v j := by
+      refine Finset.sum_congr rfl (fun j _ => ?_)
+      simp only [tsallisGradTerm, if_neg hq]
+    rw [h_reshape]
+    exact h
+
+/-- **Chain rule for the payoff term `∑ j, p_j · ε_j`.** Linear; each
+    component has derivative `v_j · ε_j`. -/
+private lemma payoff_hasDerivAt_along_trajectory {J : ℕ} (ε : Fin J → ℝ)
+    {p : ℝ → Fin J → ℝ} {v : Fin J → ℝ} {t : ℝ}
+    (hp_deriv : ∀ j, HasDerivAt (fun s => p s j) (v j) t) :
+    HasDerivAt (fun s => ∑ j, p s j * ε j)
+               (∑ j, v j * ε j) t := by
+  apply HasDerivAt.fun_sum
+  intros j _
+  exact (hp_deriv j).mul_const (ε j)
+
+/-- **Chain rule for `cesPotential` along a positive-orthant trajectory.**
+    Combines the payoff and entropy chain rules; the derivative is
+    `∑ j, cesPotentialGrad J q T ε (p t) j · v_j`.
+
+    Required hypotheses (the discovery content):
+      * `0 < p t j` for all `j`: positivity required for both `log` and
+        `rpow_const` derivatives to be well-defined.
+      * `HasDerivAt (fun s => p s j) (v j) t` for each `j`: differentiability
+        of each component of the trajectory at `t`.
+
+    Both `q = 1` (Shannon) and `q ≠ 1` (Tsallis) cases handled uniformly
+    via `tsallisGradTerm`. -/
+theorem cesPotential_hasDerivAt_along_trajectory {J : ℕ} {q T : ℝ}
+    (ε : Fin J → ℝ) {p : ℝ → Fin J → ℝ} {v : Fin J → ℝ} {t : ℝ}
+    (hp_pos : ∀ j, 0 < p t j)
+    (hp_deriv : ∀ j, HasDerivAt (fun s => p s j) (v j) t) :
+    HasDerivAt (fun s => cesPotential J q T (p s) ε)
+               (∑ j, cesPotentialGrad J q T ε (p t) j * v j) t := by
+  have h_payoff := payoff_hasDerivAt_along_trajectory ε hp_deriv
+  have h_tsallis := tsallisEntropy_hasDerivAt_along_trajectory
+                     (q := q) hp_pos hp_deriv
+  have h_T_tsallis := h_tsallis.const_mul T
+  have h_sub := h_payoff.sub h_T_tsallis
+  convert h_sub using 1
+  -- Goal: ∑ j, cesPotentialGrad · v = (∑ j, v · ε) - T · (∑ j, tsallisGradTerm · v)
+  rw [Finset.mul_sum, ← Finset.sum_sub_distrib]
+  refine Finset.sum_congr rfl (fun j _ => ?_)
+  simp only [cesPotentialGrad, tsallisGradTerm]
+  split_ifs with hq
+  · -- q = 1 case
+    ring
+  · -- q ≠ 1 case
+    ring
+
+/-- **Concrete `IsGradientFlow` constructor.** Given a positive-orthant
+    trajectory `p` satisfying the gradient-flow ODE
+    `dp_j/dt = -cesPotentialGrad_j`, produces an `IsGradientFlow` witness
+    with gradient field `g := fun t j => cesPotentialGrad J q T ε (p t) j`.
+
+    This discharges the `future pass` caveat flagged in the abstract
+    Lyapunov theorems: the `hΦ_deriv` field is computed via the
+    `cesPotential_hasDerivAt_along_trajectory` chain rule, not
+    axiomatized. -/
+def gradientFlow_of_trajectory {J : ℕ} (q T : ℝ)
+    (ε : Fin J → ℝ)
+    (p : ℝ → Fin J → ℝ)
+    (hp_pos : ∀ t j, 0 < p t j)
+    (hp_deriv : ∀ t j, HasDerivAt (fun s => p s j)
+                        (-(cesPotentialGrad J q T ε (p t) j)) t) :
+    IsGradientFlow J q T ε p
+      (fun t j => cesPotentialGrad J q T ε (p t) j) where
+  hp_deriv := hp_deriv
+  hΦ_deriv := by
+    intro t
+    have h := cesPotential_hasDerivAt_along_trajectory (q := q) (T := T)
+                ε (p := p) (v := fun j => -(cesPotentialGrad J q T ε (p t) j))
+                (hp_pos t) (fun j => hp_deriv t j)
+    convert h using 1
+    rw [← Finset.sum_neg_distrib]
+    refine Finset.sum_congr rfl (fun j _ => ?_)
+    ring
+
+/-- **Concrete example**: a stationary trajectory at a critical point of
+    `cesPotential` is a gradient-flow trajectory (velocity = 0 = -∇Φ).
+    Exercises the constructor; the Lyapunov theorems then apply trivially
+    (antitone because constant). -/
+example {J : ℕ} (q T : ℝ) (ε : Fin J → ℝ) (p₀ : Fin J → ℝ)
+    (hp_pos : ∀ j, 0 < p₀ j)
+    (h_crit : ∀ j, cesPotentialGrad J q T ε p₀ j = 0) :
+    IsGradientFlow J q T ε (fun _ => p₀)
+      (fun _ j => cesPotentialGrad J q T ε p₀ j) :=
+  gradientFlow_of_trajectory q T ε (fun _ => p₀)
+    (fun _ => hp_pos)
+    (fun t j => by
+      rw [h_crit j, neg_zero]
+      exact hasDerivAt_const t (p₀ j))
 
 -- ============================================================
 -- Corollary 6: Convergence Rate
