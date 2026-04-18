@@ -42,16 +42,18 @@
       connected components can have different ρ values. Added as explicit
       hypothesis `IsConnectedNetwork`.
 
-  Two new literature axioms (in addition to the three already in
-  `Foundations/Defs.lean`: lit_aczel, lit_kolmogorov_nagumo,
-  lit_symmetric_anova_mode_bridge):
+  One new literature axiom in this file (in addition to the three already
+  in `Foundations/Defs.lean` and two in `Foundations/WeightedAczelReduction.lean`):
 
-  lit_weighted_aczel          — weighted extension of Aczél (1948).
   lit_multi_scale_rho_common  — multi-scale extension of Kolmogorov-Nagumo.
 
-  These classical results are statements from the functional-equations
-  literature (Aczél & Dhombres 1989, Ch. 15-16) and are axiomatized here
-  rather than reproduced from first principles.
+  The weighted Aczel dependency previously provided by a single
+  `lit_weighted_aczel` axiom is now supplied by the proved theorem
+  `weighted_aczel_real` in `WeightedAczelReduction.lean`, which reduces
+  weighted Aczel to classical `lit_aczel` modulo two narrower axioms
+  (`lit_symmetric_extension` + `lit_aczel_via_replication`), plus a
+  `levelCount` construction that eliminates the usual rational-to-real
+  continuity step.
 
   ===============================================================
   DISCOVERIES (expected; see ~/thesis/research/demographics/generalized_aczel_status.md)
@@ -95,6 +97,7 @@
 
 import CESProofs.Foundations.Defs
 import CESProofs.Foundations.Emergence
+import CESProofs.Foundations.WeightedAczelReduction
 import Mathlib.GroupTheory.Perm.Basic
 
 noncomputable section
@@ -185,28 +188,6 @@ def NetA3_ScaleConsistent {J : ℕ} (G : NetworkAggFun J) : Prop :=
 -- Section 3b: Literature axioms for the generalization
 -- ============================================================
 
-/-- **Weighted Aczél (literature axiom).**
-    Weighted extension of `lit_aczel`: under homogeneity + scale consistency
-    + regularity + symmetry-within-level-sets of a weight function `w`, the
-    aggregator is a weighted power mean with weights compatible with `w`.
-
-    Classical result; proved in Aczél & Dhombres, *Functional Equations in
-    Several Variables*, Cambridge Univ. Press, 1989, Chapter 15 (weighted
-    quasi-arithmetic means). Not currently available in Mathlib; axiomatized
-    here following the same convention as `lit_aczel` and
-    `lit_kolmogorov_nagumo`. -/
-axiom lit_weighted_aczel {J : ℕ} (F : AggFun J) (w : Fin J → ℝ)
-    (_hcont : IsContinuousAgg J F)
-    (_hincr : IsStrictlyIncreasing J F)
-    (_hhom : IsHomogDegOne J F)
-    (_hsc : IsScaleConsistent J F)
-    (_hsym : ∀ (σ : Equiv.Perm (Fin J)),
-               (∀ (j : Fin J), w (σ j) = w j) →
-               ∀ (x : Fin J → ℝ), F (x ∘ σ.symm) = F x) :
-    ∃ (ρ : ℝ) (_hρ : ρ ≠ 0) (a : Fin J → ℝ),
-      (∀ (j k : Fin J), w j = w k → a j = a k) ∧
-      (∀ (x : Fin J → ℝ), F x = (∑ j, a j * (x j) ^ ρ) ^ (1 / ρ))
-
 /-- **Multi-scale ρ-consistency (literature axiom).**
     Generalization of `lit_kolmogorov_nagumo` from single-scale to multi-scale:
     if a family {G_i} of power-mean aggregators on a connected index set is
@@ -234,12 +215,14 @@ axiom lit_multi_scale_rho_common {J : ℕ}
     component G_i is a weighted power mean with weights compatible with
     the W-level-set structure of its input row.
 
-    Proof: apply `lit_weighted_aczel` to each component, using A2' at
-    node i to supply symmetry within level sets of (W i ·). -/
+    Proof: apply `weighted_aczel_real` (from WeightedAczelReduction, which
+    reduces to classical `lit_aczel` via input replication modulo two
+    narrower axioms) to each component, using A2' at node i to supply
+    symmetry within level sets of (W i ·). -/
 theorem network_per_component_power_mean
     {J : ℕ} (_hJ : 0 < J)
     (G : NetworkAggFun J) (W : NetworkMatrix J)
-    (_hW_nn : IsNonNegNetwork W)
+    (hW_nn : IsNonNegNetwork W)
     (h1 : NetA1_Homogeneity G)
     (h2' : NetA2prime_WeightedSymmetry G W)
     (h3 : NetA3_ScaleConsistent G)
@@ -250,14 +233,14 @@ theorem network_per_component_power_mean
       (∀ (x : Fin J → ℝ), G i x = (∑ j, a_i j * (x j) ^ ρ_i) ^ (1 / ρ_i)) := by
   intro i
   -- Package A2' at node i as the symmetry hypothesis required by
-  -- `lit_weighted_aczel`, using the weight function w := (W i ·).
+  -- `weighted_aczel_real`, using the weight function w := (W i ·).
   have hsym : ∀ (σ : Equiv.Perm (Fin J)),
                 (∀ (j : Fin J), W i (σ j) = W i j) →
                 ∀ (x : Fin J → ℝ), G i (x ∘ σ.symm) = G i x := by
     intro σ hσ x
     exact h2' i σ hσ x
-  exact lit_weighted_aczel (G i) (fun j => W i j)
-    (hcont i) (hincr i) (h1 i) (h3 i) hsym
+  exact weighted_aczel_real (G i) (fun j => W i j)
+    (fun j => hW_nn i j) (hcont i) (hincr i) (h1 i) (h3 i) hsym
 
 -- ============================================================
 -- Section 5: Common ρ across components
