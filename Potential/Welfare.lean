@@ -340,7 +340,7 @@ theorem tsallisEntropy_strict_midpoint {J : ℕ} {q : ℝ} (hq : 1 < q)
   -- Algebraic manipulation: strict inequality survives division by q-1 > 0
   -- and the (1 - ·) / (q-1) transformation.
   -- Rewrite via the difference: target ↔ RHS − LHS > 0, expand, apply h_core.
-  rw [div_add_div_same]
+  rw [← add_div]
   rw [div_div, div_lt_div_iff₀ (by linarith : 0 < (q - 1) * 2) hq1_pos]
   nlinarith [h_core]
 
@@ -630,7 +630,7 @@ theorem tsallisEntropy_strict_midpoint_concave {J : ℕ} {q : ℝ}
     field_simp
     ring
   rw [h_trans, h_trans, h_trans]
-  rw [div_add_div_same, div_div]
+  rw [← add_div, div_div]
   rw [div_lt_div_iff₀ (by positivity : (0 : ℝ) < (1 - q) * 2) h1q_pos]
   nlinarith [h_core, h1q_pos]
 
