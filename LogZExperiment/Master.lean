@@ -1,5 +1,10 @@
 /-
-  LogZMaster.lean — tradition-neutral log-partition-function calculus.
+  LogZExperiment/Master.lean — tradition-neutral log-partition-function calculus.
+
+  **ISOLATION NOTE**: this file lives under `CESProofs/LogZExperiment/`
+  as a quarantined architectural experiment. If the experiment fails
+  or is judged unproductive, delete the entire `LogZExperiment/`
+  subdirectory — nothing else in `CESProofs/` imports it.
 
   Master object: `logZ x ρ = log (∑ x_j^ρ)`.
 
