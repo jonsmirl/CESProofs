@@ -6,52 +6,47 @@
   to the classical `lit_aczel` via the standard *input replication* argument
   for rational weights, plus continuity for the irrational closure.
 
-  STATUS (April 2026 — Phase 2 complete, zero sorry, refactored downstream):
+  STATUS (April 2026 — Phase 3a complete, zero sorry, one axiom remaining):
     * ✅ Replication sum-invariance lemma `sum_replicate_sigma`: proved, zero
       axioms. (The combinatorial core of the replication argument.)
     * ✅ Level-set-rank trick `levelCount` / `levelCount_eq_iff`: proved, zero
       axioms. (Maps real weights to integer multiplicities with equivalent
       level-set structure.)
-    * ✅ `weighted_aczel_rational`: proved modulo two narrower axioms
-      `lit_symmetric_extension` (existence of symmetric N-ary extension)
-      and `lit_aczel_via_replication` (classical Aczel applied at the Sigma
-      arity + sum-replication bridge). Both narrower than the original
-      `lit_weighted_aczel`.
+    * ✅ `aczel_via_replication`: PROVED (Phase 3a). Arity transport from
+      the Σ-type `(j : Fin J) × Fin (p j)` to `Fin N` (where N = ∑ p j) via
+      `Fintype.equivFin`, giving a fully-symmetric N-ary aggregator F' on
+      Fin N; then `emergent_CES` applied to F' forces power-mean form; the
+      sum-replication identity translates back to weighted form on F.
+    * ✅ `weighted_aczel_rational`: proved modulo ONE remaining axiom
+      `lit_symmetric_extension` (existence of symmetric N-ary extension).
     * ✅ `weighted_aczel_real`: PROVED via the level-set-rank trick from
-      `weighted_aczel_rational`, using NO continuity-closure argument. The
-      insight: `weighted_aczel_rational`'s conclusion only references `p`
-      through the level-set compatibility of the output weights, so any
-      `p` with the same level-set structure as `w` suffices. The
-      `levelCount` construction supplies such a `p`, eliminating the
-      continuity step entirely.
-    * ✅ NetworkAczel.lean refactored to use `weighted_aczel_real` instead
-      of `lit_weighted_aczel`. That axiom is now removed from NetworkAczel.
+      `weighted_aczel_rational`, using NO continuity-closure argument.
+    * ✅ NetworkAczel.lean uses `weighted_aczel_real` instead of
+      `lit_weighted_aczel`. That axiom is removed from NetworkAczel.
 
   AXIOM COUNT CHANGES:
     Phase 1: 2 new lit_ axioms (weighted + multi-scale).
     Phase 2: 3 new lit_ axioms (symmetric_extension + aczel_via_replication +
-             multi-scale). +1 axiom count.
+             multi-scale).
+    Phase 3a: 2 new lit_ axioms (symmetric_extension + multi-scale). The
+              `lit_aczel_via_replication` axiom is now the theorem
+              `aczel_via_replication`, proved from `emergent_CES` + the
+              replication sum identity via a Fintype equivalence.
 
-    However, the two new narrower axioms (`lit_symmetric_extension` +
-    `lit_aczel_via_replication`) together carry the SAME information as
-    the original `lit_weighted_aczel` but are decomposed into:
-      - an existence-of-extension step (construction content), and
-      - an arity-transport step (mechanical via Fin equivalence).
-    Each is independently targetable for future elimination, whereas
-    the monolithic `lit_weighted_aczel` was not.
-
-  NEW PROVED CONTENT (reusable lemmas):
+  NEW PROVED CONTENT (reusable lemmas / theorems):
     * `sum_replicate_sigma` — combinatorial sum-invariance.
-    * `levelCount` + `levelCount_eq_iff` — level-set-rank construction
-      and its equivalence.
-    * `weighted_aczel_rational` — rational-weight case (theorem, was axiom).
-    * `weighted_aczel_real` — real-weight case (theorem, new).
+    * `levelCount` + `levelCount_eq_iff` — level-set-rank construction.
+    * `aczel_via_replication` — arity-transport bridge (theorem, Phase 3a).
+    * `weighted_aczel_rational` — rational-weight case (theorem).
+    * `weighted_aczel_real` — real-weight case (theorem).
 -/
 
 import CESProofs.Foundations.Defs
 import CESProofs.Foundations.Emergence
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Data.Fintype.Sigma
+import Mathlib.Data.Fin.SuccPred
+import Mathlib.Logic.Equiv.Fin.Basic
 
 noncomputable section
 
@@ -142,33 +137,132 @@ axiom lit_symmetric_extension {J : ℕ} (F : AggFun J)
          Ftilde (fun ij => x ij.1) = F x)
 
 -- ============================================================
--- Section 3: Bridge from Ftilde's classical-Aczel conclusion
+-- Section 3: Bridge from Ftilde's classical-Aczel conclusion (PROVED, Phase 3a)
 -- ============================================================
 
-/-- **Helper axiom**: the bridge from Ftilde's classical-Aczel conclusion
-    to F's weighted-power-mean form. This encapsulates:
-      (a) applying `lit_aczel` at the Sigma arity to Ftilde, and
-      (b) using `sum_replicate_rpow` to translate the result.
+/-- **Aczél via replication (arity-transport bridge).**
+    Given a fully-symmetric aggregator `Ftilde` on the Σ-type
+    `(j : Fin J) × Fin (p j)` that extends `F` on fiber-constant inputs and
+    satisfies the classical Aczél regularity (continuity, strict monotonicity,
+    homogeneity of degree 1), `F` is a weighted power mean with weights
+    `a j = p j / N` (where `N = ∑ j, p j`) and level-set compatibility
+    `p j = p k ⇒ a j = a k`.
 
-    This axiom is removable with ~3-5 additional hours of Lean work:
-    re-state `lit_aczel` at the Sigma arity (or use a Fin ≃ Sigma
-    equivalence) and substitute in `sum_replicate_rpow`.
+    **Proof.** Use `Fintype.equivFin` composed with `finCongr` to obtain an
+    equivalence `e : Σ ≃ Fin N`. Transport `Ftilde` to an N-ary aggregator
+    `F'(y) := Ftilde (fun ij ↦ y (e ij))`. Transport symmetry, continuity,
+    strict monotonicity, homogeneity, and scale consistency (trivial)
+    through `e`. Apply `emergent_CES` to obtain `F' = powerMean N ρ hρ`.
+    For any `x : Fin J → ℝ`, setting `y := fun k ↦ x (e.symm k).1` gives
+    `F(x) = Ftilde (fun ij ↦ x ij.1) = F'(y)`; the power-mean formula for
+    `F'(y)` is translated via `Equiv.sum_comp` (change of variables along
+    `e.symm`) and `sum_replicate_sigma` into a weighted power mean on `F`
+    with the claimed weights.
 
-    Keeping it separate here so the file compiles cleanly at first pass. -/
-axiom lit_aczel_via_replication {J : ℕ} (F : AggFun J)
-    (p : Fin J → ℕ) (_hp_pos : ∀ (j : Fin J), 0 < p j)
+    This theorem supersedes the Phase 2 `lit_aczel_via_replication` axiom. -/
+theorem aczel_via_replication {J : ℕ} (F : AggFun J)
+    (p : Fin J → ℕ)
     (Ftilde : ((j : Fin J) × Fin (p j) → ℝ) → ℝ)
-    (_hFtilde_eq : ∀ (x : Fin J → ℝ), Ftilde (fun ij => x ij.1) = F x)
-    (_hcont : IsContinuousAgg J F)
-    (_hincr : IsStrictlyIncreasing J F)
-    (_hhom : IsHomogDegOne J F)
-    (_hsc : IsScaleConsistent J F)
-    (_hsym : ∀ (σ : Equiv.Perm (Fin J)),
-               (∀ (j : Fin J), p (σ j) = p j) →
-               ∀ (x : Fin J → ℝ), F (x ∘ σ.symm) = F x) :
+    (hFtilde_sym : ∀ (σ : Equiv.Perm ((j : Fin J) × Fin (p j)))
+                     (y : ((j : Fin J) × Fin (p j)) → ℝ),
+                     Ftilde (y ∘ σ) = Ftilde y)
+    (hFtilde_hom : ∀ (c : ℝ), 0 < c → ∀ (y : ((j : Fin J) × Fin (p j)) → ℝ),
+                     Ftilde (fun ij => c * y ij) = c * Ftilde y)
+    (hFtilde_cont : Continuous Ftilde)
+    (hFtilde_incr : ∀ (y z : ((j : Fin J) × Fin (p j)) → ℝ),
+                      (∀ ij, y ij ≤ z ij) → (∃ ij, y ij < z ij) →
+                      Ftilde y < Ftilde z)
+    (hFtilde_eq : ∀ (x : Fin J → ℝ), Ftilde (fun ij => x ij.1) = F x) :
     ∃ (ρ : ℝ) (_hρ : ρ ≠ 0) (a : Fin J → ℝ),
       (∀ (j k : Fin J), p j = p k → a j = a k) ∧
-      (∀ (x : Fin J → ℝ), F x = (∑ j, a j * (x j) ^ ρ) ^ (1 / ρ))
+      (∀ (x : Fin J → ℝ), F x = (∑ j, a j * (x j) ^ ρ) ^ (1 / ρ)) := by
+  classical
+  set N : ℕ := ∑ j, p j with hN_def
+  -- Cardinality of the Σ-type equals N.
+  have hcard : Fintype.card ((j : Fin J) × Fin (p j)) = N := by
+    change Fintype.card _ = ∑ j, p j
+    simp [Fintype.card_sigma, Fintype.card_fin]
+  -- Equivalence e : Σ ≃ Fin N.
+  let e : ((j : Fin J) × Fin (p j)) ≃ Fin N :=
+    (Fintype.equivFin _).trans (finCongr hcard)
+  -- Transport Ftilde to an N-ary aggregator F'.
+  let F' : AggFun N := fun y => Ftilde (fun ij => y (e ij))
+  -- F' is continuous.
+  have hF'_cont : IsContinuousAgg N F' :=
+    hFtilde_cont.comp (continuous_pi (fun ij => continuous_apply (e ij)))
+  -- F' is symmetric.
+  have hF'_sym : IsSymmetric N F' := by
+    intro y τ
+    change Ftilde (fun ij => (y ∘ τ) (e ij)) = Ftilde (fun ij => y (e ij))
+    have heq :
+        (fun ij : (j : Fin J) × Fin (p j) => (y ∘ τ) (e ij))
+          = (fun ij : (j : Fin J) × Fin (p j) => y (e ij))
+              ∘ (e.trans (τ.trans e.symm)) := by
+      funext ij
+      simp [Function.comp_apply]
+    rw [heq]
+    exact hFtilde_sym (e.trans (τ.trans e.symm)) (fun ij => y (e ij))
+  -- F' is strictly increasing.
+  have hF'_incr : IsStrictlyIncreasing N F' := by
+    intro y z hle hlt
+    obtain ⟨k, hk⟩ := hlt
+    change Ftilde (fun ij => y (e ij)) < Ftilde (fun ij => z (e ij))
+    apply hFtilde_incr
+    · intro ij; exact hle (e ij)
+    · refine ⟨e.symm k, ?_⟩
+      change y (e (e.symm k)) < z (e (e.symm k))
+      simpa using hk
+  -- F' is homogeneous of degree one.
+  have hF'_hom : IsHomogDegOne N F' := by
+    intro y c hc
+    change Ftilde (fun ij => c * y (e ij)) = c * Ftilde (fun ij => y (e ij))
+    exact hFtilde_hom c hc (fun ij => y (e ij))
+  -- F' is scale-consistent (placeholder predicate — trivially true).
+  have hF'_sc : IsScaleConsistent N F' := fun _ _ _ _ => rfl
+  -- Apply the emergent-CES theorem to F'.
+  obtain ⟨ρ, hρ, hform⟩ :=
+    emergent_CES N F' hF'_cont hF'_sym hF'_incr hF'_hom hF'_sc
+  -- Assemble the result: weights a j := p j / N.
+  refine ⟨ρ, hρ, fun j => (p j : ℝ) / N, ?_, ?_⟩
+  · -- Level-set compatibility: p j = p k ⇒ p j / N = p k / N.
+    intro j k hpjk
+    change (p j : ℝ) / (N : ℝ) = (p k : ℝ) / (N : ℝ)
+    have h1 : (p j : ℝ) = (p k : ℝ) := by exact_mod_cast hpjk
+    rw [h1]
+  · -- Formula: F x = (∑ j, (p j / N) * x j ^ ρ) ^ (1/ρ).
+    intro x
+    change F x = (∑ j, (p j : ℝ) / (N : ℝ) * (x j) ^ ρ) ^ (1 / ρ)
+    rw [← hFtilde_eq x]
+    -- Goal: Ftilde (fun ij => x ij.1) = ...
+    -- Bridge: Ftilde (fun ij => x ij.1) = powerMean N ρ hρ (fun k => x (e.symm k).1)
+    -- via F' = powerMean N ρ hρ (from hform) and the defeq unfolding of F'.
+    have bridge : Ftilde (fun ij => x ij.1) =
+                  powerMean N ρ hρ (fun k => x (e.symm k).1) := by
+      have hft_eq :
+          (fun ij : (j : Fin J) × Fin (p j) => x ij.1)
+            = (fun ij : (j : Fin J) × Fin (p j) =>
+                 (fun k : Fin N => x (e.symm k).1) (e ij)) := by
+        funext ij
+        change x ij.1 = x (e.symm (e ij)).1
+        rw [Equiv.symm_apply_apply]
+      rw [hft_eq]
+      -- The LHS is F' (fun k => x (e.symm k).1) by defeq (unfolding F').
+      exact congrFun hform (fun k => x (e.symm k).1)
+    rw [bridge]
+    -- Goal: powerMean N ρ hρ (fun k => x (e.symm k).1) = ...
+    change ((1 / (N : ℝ)) * ∑ k : Fin N, (x (e.symm k).1) ^ ρ) ^ (1 / ρ)
+        = (∑ j, (p j : ℝ) / (N : ℝ) * (x j) ^ ρ) ^ (1 / ρ)
+    -- Change of variables along e.symm : Fin N ≃ Σ.
+    have hcov :
+        ∑ k : Fin N, (x ((e.symm k).1)) ^ ρ
+          = ∑ ij : (j : Fin J) × Fin (p j), (x ij.1) ^ ρ :=
+      e.symm.sum_comp (fun ij => (x ij.1) ^ ρ)
+    rw [hcov, sum_replicate_sigma p (fun j => (x j) ^ ρ)]
+    -- Final algebraic step: (1/N) * ∑ p j * x j^ρ = ∑ (p j / N) * x j^ρ.
+    congr 1
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl (fun j _ => ?_)
+    ring
 
 -- ============================================================
 -- Section 4: Weighted Aczel for rational weights (PROVED)
@@ -182,10 +276,10 @@ axiom lit_aczel_via_replication {J : ℕ} (F : AggFun J)
 
     Proof:
       1. Use `lit_symmetric_extension` to construct a symmetric N-ary
-         extension `Ftilde` of `F` (where `N` is indexed by the Σ-type).
-      2. Apply classical `lit_aczel` to `Ftilde` via
-         `lit_aczel_via_replication`, which combines the classical
-         `lit_aczel` with the `sum_replicate_rpow` translation step. -/
+         extension `Ftilde` of `F` (where `N` is indexed by the Σ-type)
+         together with its regularity properties.
+      2. Apply `aczel_via_replication` (PROVED in Section 3 above) to
+         discharge the arity-transport + classical Aczél combination. -/
 theorem weighted_aczel_rational {J : ℕ} (F : AggFun J)
     (p : Fin J → ℕ) (hp_pos : ∀ (j : Fin J), 0 < p j)
     (hcont : IsContinuousAgg J F)
@@ -198,13 +292,12 @@ theorem weighted_aczel_rational {J : ℕ} (F : AggFun J)
     ∃ (ρ : ℝ) (_hρ : ρ ≠ 0) (a : Fin J → ℝ),
       (∀ (j k : Fin J), p j = p k → a j = a k) ∧
       (∀ (x : Fin J → ℝ), F x = (∑ j, a j * (x j) ^ ρ) ^ (1 / ρ)) := by
-  -- Step 1: obtain the symmetric extension via the axiom.
-  obtain ⟨Ftilde, _hFtilde_sym, _hFtilde_hom, _hFtilde_cont, _hFtilde_incr, hFtilde_eq⟩ :=
+  -- Step 1: obtain the symmetric extension via the remaining axiom.
+  obtain ⟨Ftilde, hFtilde_sym, hFtilde_hom, hFtilde_cont, hFtilde_incr, hFtilde_eq⟩ :=
     lit_symmetric_extension F p hp_pos hcont hincr hhom hsc hsym
-  -- Step 2: Apply the bridge axiom that combines Aczel on Ftilde with
-  -- the sum-replication translation back to F.
-  exact lit_aczel_via_replication F p hp_pos Ftilde hFtilde_eq
-    hcont hincr hhom hsc hsym
+  -- Step 2: apply the proved arity-transport bridge.
+  exact aczel_via_replication F p Ftilde
+    hFtilde_sym hFtilde_hom hFtilde_cont hFtilde_incr hFtilde_eq
 
 -- ============================================================
 -- Section 4: Weighted Aczel for real weights (PROVED via level-set-rank trick)
