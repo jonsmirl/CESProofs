@@ -216,6 +216,110 @@ theorem stability_mode_contraction {k : ℕ} (hk : 2 ≤ k) {m₁ m₂ : ℕ}
       simp only [neg_le_neg_iff]
       exact_mod_cast (show m₁ - 2 ≤ m₂ - 2 by omega)
 
+-- ============================================================
+-- Discrete ⇄ Continuous bridge (A3 iteration of log Z)
+-- ============================================================
+
+/-! ### From discrete mode iteration to continuous flow
+
+Per `research/demographics/A3_encodes_time.md` and
+`research/demographics/logZ_is_the_master_generator.md`, A3 (scale
+consistency / associativity) makes the multi-scale aggregation
+operator R_k iterable as a semigroup. The scalar fingerprint of that
+semigroup law, at the mode-amplitude level, is captured below:
+
+* `modeAfterL_semigroup` — the one-step law `R^(L+M) = R^L ∘ R^M`
+  for the mode-amplitude recursion.
+* `modeAfterL_eq_exp_decay` — log-linearization of the discrete
+  decay: `(modeRate k m)^L` is exponential decay at rate
+  `λ_{k,m} = ((m-2)/2) · log k`.
+* `discrete_continuous_rate_match` — hypothesis-bundled identification
+  of `λ_{k,m}` with the m-th eigenvalue of the linearized gradient
+  flow on log Z at the CES fixed point. The Hessian-eigenvalue
+  content is supplied by the caller (Paper C spectral calculation);
+  Lean certifies the rate-matching identity.
+* `modeAfterL_tendsto_continuous_flow` — the discrete iteration is
+  *pointwise equal to* the continuous exponential flow evaluated at
+  integer times.
+
+Narrative scope: these are scalar per-mode identities, not an
+operator-level definition of R_k. The full operator-on-functions
+version requires the Hoeffding ANOVA decomposition (axiomatized
+below as `lit_symmetric_anova_mode_bridge`).
+-/
+
+/-- **A3 → iteration → semigroup** at the mode-amplitude level:
+    multi-layer aggregation composes associatively.
+    `modeAfterL k m (L + M) = modeAfterL k m L ∘ modeAfterL k m M`.
+    This is the scalar fingerprint of R_k's operator semigroup law. -/
+theorem modeAfterL_semigroup (k m L M : ℕ) (a₀ : ℝ) :
+    modeAfterL k m (L + M) a₀ =
+    modeAfterL k m L (modeAfterL k m M a₀) := by
+  simp only [modeAfterL]
+  rw [pow_add]
+  ring
+
+/-- **Log-linearization of discrete decay**: for `k ≥ 2` and `m ≥ 3`,
+    the per-layer geometric contraction `(modeRate k m)^L · a₀`
+    coincides exactly with continuous exponential decay
+    `a₀ · exp(-λ_{k,m} · L)` at rate
+    `λ_{k,m} = ((m-2)/2) · log k`. This is the formal version of
+    "R_k iteration = exp(-λt) in continuous time" at the scalar
+    mode-amplitude level. -/
+theorem modeAfterL_eq_exp_decay {k L : ℕ} (hk : 2 ≤ k) {m : ℕ}
+    (hm : 3 ≤ m) (a₀ : ℝ) :
+    modeAfterL k m L a₀ =
+    a₀ * Real.exp (-((↑(m - 2) : ℝ) / 2) * Real.log (↑k) * ↑L) := by
+  have hkpos : (0 : ℝ) < ↑k := by exact_mod_cast (show 0 < k by omega)
+  simp only [modeAfterL, modeRate, if_neg (show ¬(m ≤ 2) by omega)]
+  rw [← rpow_natCast ((↑k : ℝ) ^ (-(↑(m - 2) : ℝ) / 2)) L,
+      ← rpow_mul hkpos.le,
+      rpow_def_of_pos hkpos,
+      show Real.log (↑k : ℝ) * (-(↑(m - 2) : ℝ) / 2 * ↑L) =
+           -((↑(m - 2) : ℝ) / 2) * Real.log ↑k * ↑L from by ring]
+  ring
+
+/-- **Discrete-continuous rate match** (hypothesis-bundled):
+    under the hypothesis that the m-th linearized-flow eigenvalue
+    `lam_m` equals `((m-2)/2) · log k` — the Hessian-eigenvalue
+    content on the mode-m eigenspace, to be supplied by Paper C's
+    spectral calculation or by a future Hessian-of-log-Z proof —
+    the discrete per-layer contraction rate `modeRate k m` equals
+    the continuous rate `exp(-lam_m)`. Bundling the Hessian identity
+    as hypothesis sidesteps both Fisher-Rao scaffolding and ANOVA
+    projection infrastructure not yet in Mathlib. -/
+theorem discrete_continuous_rate_match {k m : ℕ} (hk : 2 ≤ k)
+    (hm : 3 ≤ m) (lam_m : ℝ)
+    (h_hess : lam_m = ((↑(m - 2) : ℝ) / 2) * Real.log (↑k)) :
+    modeRate k m = Real.exp (-lam_m) := by
+  have hkpos : (0 : ℝ) < ↑k := by exact_mod_cast (show 0 < k by omega)
+  simp only [modeRate, if_neg (show ¬(m ≤ 2) by omega)]
+  rw [h_hess, rpow_def_of_pos hkpos,
+      show Real.log (↑k : ℝ) * (-(↑(m - 2) : ℝ) / 2) =
+           -((↑(m - 2) : ℝ) / 2 * Real.log ↑k) from by ring]
+
+/-- **Continuum limit of discrete iteration** (equality, not merely
+    tendsto): the sequence `modeAfterL k m L a₀` is pointwise equal
+    to the continuous exponential-flow solution
+    `a₀ · exp(-λ_{k,m} · L)` evaluated at integer times, so their
+    difference vanishes identically — hence a fortiori tends to 0.
+    This is the scalar statement of "discrete R_k iteration *is* the
+    continuous gradient flow on log Z restricted to integer times",
+    valid in the linearized regime around the CES fixed point. -/
+theorem modeAfterL_tendsto_continuous_flow
+    {k : ℕ} (hk : 2 ≤ k) {m : ℕ} (hm : 3 ≤ m) (a₀ : ℝ) :
+    Filter.Tendsto
+      (fun L : ℕ => modeAfterL k m L a₀ -
+        a₀ * Real.exp (-((↑(m - 2) : ℝ) / 2) * Real.log (↑k) * ↑L))
+      Filter.atTop (nhds 0) := by
+  have h_eq : ∀ L : ℕ, modeAfterL k m L a₀ -
+      a₀ * Real.exp (-((↑(m - 2) : ℝ) / 2) * Real.log (↑k) * ↑L) = 0 := by
+    intro L
+    rw [modeAfterL_eq_exp_decay hk hm a₀]
+    ring
+  simp_rw [h_eq]
+  exact tendsto_const_nhds
+
 /-- **Symmetric ANOVA Mode Bridge** (Hoeffding 1948; Efron-Stein 1981).
     [External axiom — formally reducible but omitted for tractability]
 
