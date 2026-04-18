@@ -563,4 +563,181 @@ theorem shareFunction_maximum_dominates [NeZero J]
   apply div_le_div_of_nonneg_right (hmax j)
   exact (Finset.sum_pos (fun i _ => hw i) Finset.univ_nonempty).le
 
+-- ============================================================
+-- Part 9: The Eleventh View — Expected Utility with Preprocessing
+-- ============================================================
+
+/-! ### View 11: Expected Utility with utility preprocessing
+
+An agent applying a utility preprocessing function `φ` to payoffs
+and then softmax selection at temperature `T` chooses according to
+
+    P_j = exp(φ(ε_j) / T) / Σ_k exp(φ(ε_k) / T)
+
+which is the `shareFunction` on weights `exp(φ(ε_j) / T)`.
+
+Why this is an interesting 11th view: unlike views 1-10, this one
+exposes a *composition rule* for preprocessing. The universal
+`shareFunction` admits an arbitrary preprocessing layer without
+leaving the Ten-Way family; different choices of `φ` either
+recover existing views (linear → logit; log → escort) or produce
+genuinely new parameterizations (power-utility).
+
+The **locking-under-preprocessing** question: does the `q = ρ`
+locking from Paper 2 (`Applications/Economics.q_equals_rho_locking`)
+extend to the preprocessing setting? Under log-utility preprocessing,
+the answer is yes — the preprocessing *absorbs into the CES exponent*
+(`expectedUtility_log_reduces_to_escort`), so the locking reappears
+at `(1/T) = ρ`. This is the first concrete evidence that the
+universal share function behaves well under preprocessing
+composition — a testable data point for the "Aczél / Chentsov
+mirroring" conjecture. -/
+
+/-- **View 11**: Expected Utility with utility preprocessing φ
+    composed with softmax at temperature T. -/
+def expectedUtilityAllocation (φ : ℝ → ℝ) (T : ℝ)
+    (ε : Fin J → ℝ) (j : Fin J) : ℝ :=
+  Real.exp (φ (ε j) / T) / ∑ k : Fin J, Real.exp (φ (ε k) / T)
+
+/-- **Eleventh view as shareFunction**. -/
+theorem expectedUtility_is_shareFunction (φ : ℝ → ℝ) (T : ℝ)
+    (ε : Fin J → ℝ) (j : Fin J) :
+    expectedUtilityAllocation φ T ε j =
+    shareFunction (fun k => Real.exp (φ (ε k) / T)) j := rfl
+
+/-- **Linear-utility reduction**: when preprocessing is the identity
+    (linear utility), the 11th view reduces to the 4th (standard
+    softmax / logit). -/
+theorem expectedUtility_linear_reduces_to_logit (T : ℝ)
+    (ε : Fin J → ℝ) (j : Fin J) :
+    expectedUtilityAllocation (fun e => e) T ε j = logitProbability J T ε j := by
+  unfold expectedUtilityAllocation logitProbability
+  rfl
+
+/-- **Log-utility reduction** (preprocessing absorbs into CES exponent).
+
+    When the preprocessing is logarithmic (Bernoulli / vN log-utility),
+    the softmax temperature `T` is absorbed into the CES exponent
+    `ρ = 1/T`:
+
+        exp(log(ε_j) / T)  =  ε_j ^ (1/T)
+
+    so the 11th view at `φ = log` reduces exactly to the 3rd view
+    (escort) at `q = 1/T`. Preprocessing composes with the share
+    function by multiplication of exponents; log preprocessing +
+    temperature T is observationally identical to CES with
+    exponent 1/T.
+
+    **Implication for the `q = ρ` locking**: agreement across all
+    positive input profiles forces the *effective exponents* to
+    agree (via `q_equals_rho_locking`). Under log-utility preprocessing,
+    the lockable quantity is `1/T` — the preprocessing-absorbed
+    CES exponent. The locking narrative thus extends to the
+    preprocessing case without modification: what locks is the
+    *effective* CES exponent, regardless of whether it arose from
+    a direct CES technology or from a log-utility-plus-temperature
+    composition. -/
+theorem expectedUtility_log_reduces_to_escort (T : ℝ) (hT : T ≠ 0)
+    (ε : Fin J → ℝ) (hε : ∀ k, 0 < ε k) (j : Fin J) :
+    expectedUtilityAllocation Real.log T ε j =
+    escortDistribution J (1 / T) ε j := by
+  have h_exp_log : ∀ k, Real.exp (Real.log (ε k) / T) = (ε k) ^ (1 / T) := by
+    intro k
+    rw [Real.rpow_def_of_pos (hε k)]
+    congr 1; ring
+  unfold expectedUtilityAllocation escortDistribution
+  rw [h_exp_log j]
+  congr 1
+  exact Finset.sum_congr rfl (fun k _ => h_exp_log k)
+
+/-- **Power-utility reduction**: when the preprocessing is a power
+    function `φ(ε) = ε^α` on positive inputs, the 11th view reduces
+    to `shareFunction (fun k => exp(ε_k^α / T))`. This is *not* a
+    CES-escort form (the exponential wrapping survives); it is
+    a genuinely new parameterization within the shareFunction
+    family. Power-utility preprocessing does NOT absorb into a CES
+    exponent — it produces a hybrid power-softmax. -/
+theorem expectedUtility_power_shareFunction (α T : ℝ)
+    (ε : Fin J → ℝ) (hε : ∀ k, 0 < ε k) (j : Fin J) :
+    expectedUtilityAllocation (fun e => e ^ α) T ε j =
+    shareFunction (fun k => Real.exp ((ε k) ^ α / T)) j := rfl
+
+/-- **Master Theorem (Eleven Views, One Object)**.
+
+    Extends `ten_views_one_object` with the 11th view — Expected
+    Utility with utility preprocessing. Each view is an instance
+    of `shareFunction` under an appropriate weight specification;
+    preprocessing composes by wrapping the weight through `φ`.
+
+    The 11th view is not independent: under `φ = id` it becomes
+    the 4th view (logit), under `φ = log` it becomes the 3rd
+    view (escort) with exponent `1/T` — exhibiting the
+    preprocessing-absorbed-into-exponent identity.
+
+    This is the first concrete Lean evidence of preprocessing
+    composition across the Ten-Way family. -/
+theorem eleven_views_one_object :
+    (∀ (a : Fin J → ℝ) (ρ : ℝ) (x : Fin J → ℝ) (j : Fin J),
+      factorShare J a ρ x j =
+      shareFunction (fun k => a k * (x k) ^ ρ) j) ∧
+    (∀ (q : ℝ) (x : Fin J → ℝ) (j : Fin J),
+      escortDistribution J q x j =
+      shareFunction (fun k => (x k) ^ q) j) ∧
+    (∀ (x : Fin J → ℝ) (ρ : ℝ) (j : Fin J),
+      escortProbability x ρ j =
+      shareFunction (fun k => (x k) ^ ρ) j) ∧
+    (∀ (T : ℝ) (ε : Fin J → ℝ) (j : Fin J),
+      logitProbability J T ε j =
+      shareFunction (fun k => Real.exp (ε k / T)) j) ∧
+    (∀ (ε x : Fin J → ℝ) (T h : ℝ) (j : Fin J),
+      gibbsProb ε x T h j =
+      shareFunction (fun k => gibbsWeight ε x T h k) j) ∧
+    (∀ (a x : Fin J → ℝ) (ρ : ℝ) (j : Fin J),
+      contestShare a x ρ j =
+      shareFunction (fun k => a k * x k ^ ρ) j) ∧
+    (∀ (q T : ℝ) (ε : Fin J → ℝ) (j : Fin J),
+      qExpAllocation J q T ε j =
+      shareFunction (fun k => qExp q (ε k / T)) j) ∧
+    (∀ (x : Fin J → ℝ) (ρ : ℝ) (j : Fin J),
+      powerMeanWeight x ρ j =
+      shareFunction (fun k => (x k) ^ ρ) j) ∧
+    (∀ (v : Fin J → ℝ) (j : Fin J),
+      luceChoice v j = shareFunction v j) ∧
+    (∀ (a cost : Fin J → ℝ) (ρ : ℝ) (j : Fin J),
+      equilibriumShare a cost ρ j =
+      shareFunction (fun k => agentFitness a cost ρ k) j) ∧
+    -- View 11: Expected Utility with utility preprocessing
+    (∀ (φ : ℝ → ℝ) (T : ℝ) (ε : Fin J → ℝ) (j : Fin J),
+      expectedUtilityAllocation φ T ε j =
+      shareFunction (fun k => Real.exp (φ (ε k) / T)) j) := by
+  obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10⟩ := ten_views_one_object (J := J)
+  exact ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10,
+         fun _ _ _ _ => rfl⟩
+
+/-- **Corollary: locking extends to log-utility preprocessing**.
+
+    If two `(φ_i, T_i)` EU-with-preprocessing agents both use
+    log-utility, agreement across all positive input profiles
+    forces `1/T₁ = 1/T₂`, i.e., the temperatures agree. This
+    is `q_equals_rho_locking` applied to the effective
+    CES exponents produced by log-preprocessing.
+
+    Concretely: log-utility EU agents are observationally
+    indistinguishable iff they share the same temperature.
+    Preprocessing does not give extra degrees of freedom in the
+    observed choice behavior — the locking narrative survives. -/
+theorem logUtility_locking {J : ℕ} (hJ : 2 ≤ J) {T₁ T₂ : ℝ}
+    (hT₁ : T₁ ≠ 0) (hT₂ : T₂ ≠ 0)
+    (h_link : ∀ (ε : Fin J → ℝ), (∀ k, 0 < ε k) →
+              ∀ j : Fin J,
+                expectedUtilityAllocation Real.log T₁ ε j =
+                expectedUtilityAllocation Real.log T₂ ε j) :
+    (1 : ℝ) / T₁ = 1 / T₂ := by
+  apply q_equals_rho_locking hJ
+  intro ε hε j
+  have h := h_link ε hε j
+  rw [expectedUtility_log_reduces_to_escort T₁ hT₁ ε hε j,
+      expectedUtility_log_reduces_to_escort T₂ hT₂ ε hε j] at h
+  exact h
+
 end
