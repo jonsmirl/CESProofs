@@ -28,10 +28,16 @@ LogZExperiment/
 │   ├── SextupleRole.lean    — wrap ces_sextuple_role
 │   ├── ProductionDuality.lean — inputDemand, Shephard bundled
 │   └── ArrowPratt.lean      — arrowPratt, arrowPrattCES
-└── Chentsov/                — Layer 6 Chentsov cascade
-    ├── FisherRao.lean       — matrix + Chentsov 1972 uniqueness
-    ├── CramerRao.lean       — Cramér-Rao bound (bundled)
-    └── Invariance.lean      — Fisher-Rao invariance (bundled)
+├── Chentsov/                — Layer 6 Chentsov cascade
+│   ├── FisherRao.lean       — matrix + Chentsov 1972 uniqueness
+│   ├── CramerRao.lean       — Cramér-Rao bound (bundled)
+│   └── Invariance.lean      — Fisher-Rao invariance (bundled)
+├── Preferences.lean         — Layer 7 shared foundation
+│                              (PreferenceRelation, Debreu bundled,
+│                              softmax ↔ shareFunction bridge)
+└── Aczel/
+    └── SocialChoice.lean    — Layer 7 Aczel phase (Harsanyi-Aczel
+                                CES utility aggregation, bundled)
 ```
 
 ## Architecture: five pre-fork tradition-neutral layers
@@ -91,6 +97,64 @@ Layer 7: Input-type fork                            DEEP FORK
 - 22 core theorems across 5 layer files.
 - All with zero custom axioms (`[propext, Classical.choice, Quot.sound]` only).
 - Full `lake build CESProofs.LogZExperiment.Master` passes.
+
+**Phase 7a (Layer 7 Aczél side): COMPLETE, axiom-chain verified**
+
+Added `Preferences.lean` (shared Layer 7 foundation) and
+`Aczel/SocialChoice.lean` (Aczél-tradition Harsanyi-style
+utility aggregation).
+
+Content:
+- `PreferenceRelation α` structure with reflexivity,
+  transitivity, completeness axioms.
+- `IsUtilityRepresentation` + `debreuRepresentation_bundled`
+  (hypothesis-bundled Debreu 1954).
+- `softmaxOverUtilities` bridge: softmax aggregation of utilities
+  IS a `shareFunction` AND equals the 11th view
+  `expectedUtilityAllocation` at linear utility preprocessing.
+  Both proved by `rfl`.
+- `cesSWF` — CES-form social welfare function = power-mean
+  over individual utilities.
+- `cesSWF_reduces_to_cesAggregator` (proved by `rfl`): the
+  Layer 7 Aczel SWF IS the Layer 5 `cesAggregator` applied
+  to the utility profile. *This is the downward bridge from
+  Layer 7 to Layer 5.*
+- `aczelSWF_is_cesSWF_bundled` — Harsanyi-Aczel uniqueness in
+  hypothesis-bundled form, matching Layer 3's
+  `logZ_unique_from_aczel` pattern.
+
+**Axiom-chain verification — AXIOM-CLEAN DOWN TO LAYER 0**
+
+A dedicated `#print axioms` sweep confirmed the **entire Aczél
+downward chain from Layer 7 Harsanyi-Aczel uniqueness down to
+Layer 0's `logZ` generator** depends only on `[propext,
+Classical.choice, Quot.sound]`. No custom axioms anywhere in
+the chain:
+
+- Layer 7: `aczelSWF_is_cesSWF_bundled`, `cesSWF_reduces_to_cesAggregator`,
+  Debreu + softmax bridge — all clean.
+- Layer 6 Aczél: SextupleRole wrappers, statistical estimation
+  bridge — all clean.
+- Layer 5 Aczél: factorShare/cesAggregator/economicCurvature/
+  costFunction — all clean.
+- Layer 4: bridge theorem, log-CES identity, Pythagorean
+  decomposition — all clean.
+- Layer 3: doubly-unique uniqueness + logZ satisfies Aczél
+  axiom pack — all clean.
+- Layer 1: escort ≡ escortProbability, Fisher info ≡
+  escortCumulant2 — all clean.
+- Layer 0: logZ ≡ log of escortPartitionZ, homogeneity,
+  permutation invariance — all clean.
+- Ten-Way Identity: `expectedUtility_is_shareFunction`,
+  `ten_views_one_object`, `eleven_views_one_object` — all clean.
+
+**Verification result**: all 25 theorems checked, all axiom-clean.
+The Aczél track from ordinal preferences (Layer 7 top) down
+through utility aggregation, CES power-mean, Aczél uniqueness,
+bridge theorem, six derivatives, and the log-Z master
+generator (Layer 0) is a complete axiom-clean chain. Per
+user request: "reach all the way down to the axioms before
+doing any Chentsov work" — done, verified.
 
 **Layer 6 (theorem cascades): MINIMUM-VIABLE COMPLETE**
 
