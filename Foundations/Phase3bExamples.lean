@@ -139,6 +139,73 @@ theorem G2_isNetworkCES : IsNetworkCES G2 W2 := by
     · exact Finset.univ_nonempty
   exact hasSymExt_arith (levelCount (fun j => W2 i j)) hp
 
+-- ============================================================
+-- Section 5: D6 — concrete `AggFamily` instance
+-- ============================================================
+
+/-- Uniform arithmetic mean at each arity:
+    `F n (x) = (1/n) * ∑ i, x i` for `n ≥ 1`; `F 0 := fun _ => 0` as arbitrary
+    unused filler (the `n = 0` case is never touched by downstream
+    `AggFamily` usage). -/
+def arithMean : (n : ℕ) → AggFun n
+  | 0 => fun _ => 0
+  | n + 1 => fun x => (1 / ((n + 1 : ℕ) : ℝ)) * ∑ i, x i
+
+/-- **Concrete `AggFamily`**: the uniform arithmetic-mean family.
+
+    Verifies end-to-end that `AggFamily.hasSymExtension` produces a
+    constructive `HasSymExtension` instance for `family.weightedOfFiber p`
+    (a fiber-weighted arithmetic mean). -/
+def arithmeticMeanFamily : AggFamily where
+  F := arithMean
+  continuous := by
+    intro n
+    cases n with
+    | zero => exact continuous_const
+    | succ n =>
+      refine Continuous.mul continuous_const ?_
+      exact continuous_finset_sum _ (fun i _ => continuous_apply i)
+  symmetric := by
+    intro n x σ
+    cases n with
+    | zero => rfl
+    | succ n =>
+      change (1 / ((n + 1 : ℕ) : ℝ)) * ∑ i, x (σ i) =
+             (1 / ((n + 1 : ℕ) : ℝ)) * ∑ i, x i
+      congr 1
+      exact Equiv.sum_comp σ x
+  strict_monotone := by
+    intro n x y hle hlt
+    obtain ⟨i₀, hi₀⟩ := hlt
+    cases n with
+    | zero => exact Fin.elim0 i₀
+    | succ n =>
+      change (1 / ((n + 1 : ℕ) : ℝ)) * ∑ i, x i <
+             (1 / ((n + 1 : ℕ) : ℝ)) * ∑ i, y i
+      apply mul_lt_mul_of_pos_left
+      · exact Finset.sum_lt_sum (fun i _ => hle i) ⟨i₀, Finset.mem_univ _, hi₀⟩
+      · have : (0 : ℝ) < ((n + 1 : ℕ) : ℝ) := by exact_mod_cast Nat.succ_pos n
+        exact one_div_pos.mpr this
+  homogeneous := by
+    intro n x c hc
+    cases n with
+    | zero => simp [arithMean]
+    | succ n =>
+      change (1 / ((n + 1 : ℕ) : ℝ)) * ∑ i, c * x i =
+             c * ((1 / ((n + 1 : ℕ) : ℝ)) * ∑ i, x i)
+      rw [← Finset.mul_sum]
+      ring
+
+/-- **D6 end-to-end check**: the arithmetic-mean family produces a
+    `HasSymExtension` for its fiber-weighted aggregator, constructively.
+
+    The resulting `Ftilde` is the uniform arithmetic mean at arity
+    `∑ p j`, transported to the Σ-type. All fields of `HasSymExtension`
+    hold by D6's derivation; no custom axioms. -/
+example {J : ℕ} (p : Fin J → ℕ) :
+    HasSymExtension (arithmeticMeanFamily.weightedOfFiber p) p :=
+  arithmeticMeanFamily.hasSymExtension p
+
 end Phase3bExamples
 
 end

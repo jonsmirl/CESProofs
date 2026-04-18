@@ -64,6 +64,7 @@
     * `weighted_aczel_real` — real-weight case.
 -/
 
+import CESProofs.Foundations.AggFamily
 import CESProofs.Foundations.Defs
 import CESProofs.Foundations.Emergence
 import Mathlib.Algebra.BigOperators.Fin
@@ -429,5 +430,82 @@ theorem weighted_aczel_real {J : ℕ} (F : AggFun J) (w : Fin J → ℝ)
   refine ⟨ρ, hρ, a, ?_, ha_form⟩
   intro j k hwjk
   exact ha_compat_p j k ((levelCount_eq_iff w j k).mpr hwjk)
+
+-- ============================================================
+-- Section 6: Phase D6 — `AggFamily`-derived `HasSymExtension`
+-- ============================================================
+
+/-- **Fiber-weighted aggregator derived from an `AggFamily`.**
+
+    Given `family : AggFamily` and multiplicities `p : Fin J → ℕ` with
+    `N := ∑ p j`, the fiber-weighted aggregator at arity `J` is `family.F N`
+    applied to a fiber-expansion: each `x j` is "replicated" `p j` times.
+
+    Canonically defined via the `Fintype.equivFin` equivalence. By full
+    symmetry of `family.F N`, the choice of equivalence is immaterial. -/
+noncomputable def AggFamily.weightedOfFiber (family : AggFamily) {J : ℕ}
+    (p : Fin J → ℕ) : AggFun J :=
+  let e : ((j : Fin J) × Fin (p j)) ≃ Fin (∑ j, p j) :=
+    (Fintype.equivFin _).trans
+      (finCongr (by simp [Fintype.card_sigma, Fintype.card_fin]))
+  fun x => family.F (∑ j, p j) (fun k => x (e.symm k).1)
+
+/-- **Derive `HasSymExtension` from an `AggFamily`.**
+
+    For the fiber-weighted aggregator `family.weightedOfFiber p`, the
+    symmetric extension is `family.F N` transported to the Σ-type via the
+    canonical equivalence. All fields of `HasSymExtension`:
+      * `sym`, `hom`, `cont`, `incr` — transported from `family`'s
+        corresponding fields at arity `N`.
+      * `eq_fill` — holds by definition of `weightedOfFiber`.
+
+    **Phase D6 honest framing.** This shows constructively that
+    `HasSymExtension` holds for the family-derived weighted aggregator. It
+    does NOT produce `HasSymExtension` for an arbitrary weighted-symmetric
+    F — doing so would require the classical claim "every weighted-symmetric
+    F is of `weightedOfFiber` form", which remains axiomatic (classical
+    Aczél-Dhombres content). -/
+def AggFamily.hasSymExtension (family : AggFamily) {J : ℕ} (p : Fin J → ℕ) :
+    HasSymExtension (family.weightedOfFiber p) p := by
+  classical
+  have hcard : Fintype.card ((j : Fin J) × Fin (p j)) = ∑ j, p j := by
+    simp [Fintype.card_sigma, Fintype.card_fin]
+  let e : ((j : Fin J) × Fin (p j)) ≃ Fin (∑ j, p j) :=
+    (Fintype.equivFin _).trans (finCongr hcard)
+  refine
+    { Ftilde := fun y => family.F (∑ j, p j) (fun k => y (e.symm k))
+      sym := ?_
+      hom := ?_
+      cont := ?_
+      incr := ?_
+      eq_fill := ?_ }
+  · -- sym: Ftilde (y ∘ σ) = Ftilde y, via full symmetry of family.F N.
+    intro σ y
+    let τ : Equiv.Perm (Fin (∑ j, p j)) := e.symm.trans (σ.trans e)
+    have hreindex :
+        (fun k : Fin (∑ j, p j) => (y ∘ σ) (e.symm k)) =
+        (fun k : Fin (∑ j, p j) => y (e.symm k)) ∘ τ := by
+      funext k
+      change y (σ (e.symm k)) = y (e.symm (e (σ (e.symm k))))
+      rw [Equiv.symm_apply_apply]
+    rw [hreindex]
+    exact family.symmetric _ _ τ
+  · -- hom: transported from family.homogeneous at arity N.
+    intro c hc y
+    exact family.homogeneous _ (fun k => y (e.symm k)) c hc
+  · -- cont: transported from family.continuous at arity N.
+    exact (family.continuous _).comp
+      (continuous_pi (fun k => continuous_apply (e.symm k)))
+  · -- incr: transported from family.strict_monotone at arity N.
+    intro y z hle hlt
+    obtain ⟨ij₀, hij₀⟩ := hlt
+    apply family.strict_monotone
+    · intro k; exact hle (e.symm k)
+    · refine ⟨e ij₀, ?_⟩
+      show y (e.symm (e ij₀)) < z (e.symm (e ij₀))
+      simpa using hij₀
+  · -- eq_fill: Ftilde(fill(x)) = weightedOfFiber p x, by definition.
+    intro x
+    rfl
 
 end
