@@ -11,8 +11,9 @@
 
 import CESProofs.Hierarchy.Defs
 import CESProofs.Hierarchy.WelfareDecomposition
+import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 
-open Real Finset BigOperators
+open Real Finset BigOperators MeasureTheory Set
 
 noncomputable section
 
@@ -56,7 +57,16 @@ theorem equilibriumOutput_decreasing_sigma {sigma1 sigma2 phi_val : ℝ}
 -- Welfare loss depends only on upstream parameters (sigma_{n-1}, beta_n).
 
 /-- The damping cancellation identity: sigma cancels in the product
-    c * Fbar * sigma where Fbar = phi / sigma. -/
+    c * Fbar * sigma where Fbar = phi / sigma.
+
+    **Note.** This is the *algebraic skeleton* of the damping-cancellation
+    mechanism: sigma appears in both Fbar = phi/sigma and as a weight, and
+    they cancel. The **full dynamical version** is
+    `damping_cancellation_dynamical` below, which computes the actual
+    welfare integral `∫₀^∞ c·σ·(F(t) - F̄)² dt` along the ODE trajectory
+    `Ḟ = φ - σF` and shows the result is `c δ² / 2`, independent of σ.
+    This algebraic identity is the constant-in-time residue; the
+    dynamical theorem is the full integral along the trajectory. -/
 theorem damping_cancellation_algebraic {phi_prev sigma_n c_n : ℝ}
     (hsigma : sigma_n ≠ 0) :
     c_n * (phi_prev / sigma_n) * sigma_n = c_n * phi_prev := by
@@ -72,6 +82,85 @@ theorem welfare_independent_of_own_sigma {phi_prev sigma1 sigma2 c delta : ℝ}
   have h1 : c * (phi_prev / sigma1) * sigma1 = c * phi_prev := by field_simp
   have h2 : c * (phi_prev / sigma2) * sigma2 = c * phi_prev := by field_simp
   rw [h1, h2]
+
+-- ============================================================
+-- Proposition 6(iii): Damping Cancellation — DYNAMICAL FORM
+-- ============================================================
+
+/-- **Damping cancellation (dynamical form)** — Paper 4, Section 12.
+
+    The full welfare-integral proof of damping cancellation, upgrading
+    `damping_cancellation_algebraic` from a trivial algebraic identity to
+    a rigorous computation along the actual ODE trajectory.
+
+    **Setup.** Linear dissipative relaxation `Ḟ = φ - σ F` with solution
+    `F(t) = F̄ + δ · exp(-σt)` where `F̄ = φ/σ` and `δ = F₀ - F̄` is the
+    initial deviation from equilibrium. The welfare integral is
+    `W(σ; δ) = ∫₀^∞ c · σ · (F(t) - F̄)² dt`.
+
+    **Claim.** `W(σ; δ) = c δ² / 2`, independent of σ (for σ > 0).
+
+    **Mechanism.** The σ in the integrand's weight cancels with the 1/σ
+    arising from integrating `exp(-2σt)` over `[0, ∞)`:
+    `∫₀^∞ exp(-2σt) dt = 1/(2σ)` (via `integral_exp_mul_Ioi`).
+
+    **Discovery (from the deepening prompt's predictions).**
+    - **(2) Parameterization matters, confirmed.** The theorem is stated
+      in terms of `δ` (initial deviation), not `F₀` (absolute initial
+      level). If parameterized by `F₀`, welfare becomes
+      `W(σ; F₀) = c (F₀ - φ/σ)² / 2`, which depends on σ. The
+      "cancellation" is specific to δ-parameterization.
+    - **(4) Convergence condition σ > 0, confirmed required.**
+      `integral_exp_mul_Ioi` requires `-2σ < 0`, equivalently `σ > 0`.
+    - **(5) Finite-horizon residual, not surfaced.** The infinite-
+      horizon integral closes cleanly via `integral_exp_mul_Ioi`; no
+      boundary term survives. For a finite-horizon `[0, T]` version,
+      a residual `e^(-2σT)/(2σ)` would remain (standard LQ / LQR).
+
+    **Hypotheses revealed by the proof.** Only `0 < σ` is needed.
+    No measurability or boundedness hypothesis on `δ`; `c` can be any
+    real (not just positive). The proof is axiom-free at the Lean level:
+    `#print axioms damping_cancellation_dynamical` reports only Lean
+    built-ins (`propext`, `Classical.choice`, `Quot.sound`). -/
+theorem damping_cancellation_dynamical
+    (c δ σ : ℝ) (hσ : 0 < σ) :
+    ∫ t in Set.Ioi (0 : ℝ), c * σ * (δ * Real.exp (-σ * t)) ^ 2 =
+    c * δ ^ 2 / 2 := by
+  have hσne : σ ≠ 0 := ne_of_gt hσ
+  have hneg : (-2 * σ : ℝ) < 0 := by linarith
+  -- Step 1: rewrite the integrand to (c σ δ²) · exp((-2σ) t).
+  have h_integrand :
+      (fun t : ℝ => c * σ * (δ * Real.exp (-σ * t)) ^ 2) =
+      (fun t : ℝ => (c * σ * δ ^ 2) * Real.exp ((-2 * σ) * t)) := by
+    funext t
+    rw [mul_pow]
+    have hexp_sq : Real.exp (-σ * t) ^ 2 = Real.exp ((-2 * σ) * t) := by
+      rw [pow_two, ← Real.exp_add]
+      ring_nf
+    rw [hexp_sq]
+    ring
+  rw [h_integrand]
+  -- Step 2: factor the constant out of the integral.
+  rw [MeasureTheory.integral_const_mul]
+  -- Step 3: apply `integral_exp_mul_Ioi` with `a = -2σ`, `c = 0`:
+  --   ∫ t in Ioi 0, exp((-2σ) t) dt = -exp(0) / (-2σ) = 1/(2σ).
+  rw [integral_exp_mul_Ioi hneg 0]
+  -- Step 4: simplify (c σ δ²) · (-exp((-2σ)·0) / (-2σ)) = c δ² / 2.
+  simp [Real.exp_zero]
+  field_simp
+
+/-- **Dynamical damping cancellation — σ-independence**.
+
+    Direct corollary of `damping_cancellation_dynamical`: the welfare
+    integral value does not depend on σ (at fixed δ and c). This IS the
+    content that Paper 4's "exact cancellation" claim reduces to when
+    expressed as an integral computation along the ODE trajectory. -/
+theorem welfare_integral_independent_of_sigma
+    (c δ : ℝ) (σ₁ σ₂ : ℝ) (hσ₁ : 0 < σ₁) (hσ₂ : 0 < σ₂) :
+    ∫ t in Set.Ioi (0 : ℝ), c * σ₁ * (δ * Real.exp (-σ₁ * t)) ^ 2 =
+    ∫ t in Set.Ioi (0 : ℝ), c * σ₂ * (δ * Real.exp (-σ₂ * t)) ^ 2 := by
+  rw [damping_cancellation_dynamical c δ σ₁ hσ₁,
+      damping_cancellation_dynamical c δ σ₂ hσ₂]
 
 -- ============================================================
 -- Theorem 9: Upstream Reform Principle
