@@ -13,6 +13,7 @@ import CESProofs.Potential.EffectiveCurvature
 import Mathlib.Analysis.Calculus.Deriv.MeanValue
 import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 import Mathlib.Analysis.SpecialFunctions.Log.Deriv
+import Mathlib.Analysis.Convex.SpecificFunctions.Basic
 
 open Real Finset BigOperators
 
@@ -255,6 +256,161 @@ theorem cesPotential_lyapunov_antitone
   · intro t
     exact cesPotential_lyapunov_pointwise hflow t
 
+-- ============================================================
+-- Strict convexity of cesPotential (midpoint form)
+-- for the Tsallis q > 1 regime — used for unique_minimizer.
+-- ============================================================
+
+/-- **Strict midpoint convexity of `fun x => x^q`** (q > 1) applied
+    component-wise + summed. For distinct positive `p₁ p₂`, the midpoint
+    `m_j = (p₁_j + p₂_j)/2` satisfies `∑ m^q < (∑ p₁^q + ∑ p₂^q)/2`.
+
+    Each term `((p₁_j + p₂_j)/2)^q ≤ ((p₁_j)^q + (p₂_j)^q)/2` by
+    convexity; strict at some j since `p₁ ≠ p₂`. Sum: strict. -/
+private lemma sum_rpow_strict_midpoint {J : ℕ} {q : ℝ} (hq : 1 < q)
+    {p₁ p₂ : Fin J → ℝ}
+    (h1_pos : ∀ j, 0 < p₁ j) (h2_pos : ∀ j, 0 < p₂ j)
+    (hne : p₁ ≠ p₂) :
+    ∑ j, ((p₁ j + p₂ j) / 2) ^ q <
+    (∑ j, (p₁ j) ^ q + ∑ j, (p₂ j) ^ q) / 2 := by
+  -- Extract a coordinate where p₁ j ≠ p₂ j.
+  obtain ⟨j₀, hj₀⟩ : ∃ j, p₁ j ≠ p₂ j := by
+    by_contra h
+    push_neg at h
+    exact hne (funext h)
+  -- Strict convexity of x^q at the pair (p₁ j, p₂ j) with a = b = 1/2.
+  have h_strict_rpow : StrictConvexOn ℝ (Set.Ici 0) (fun x : ℝ => x ^ q) :=
+    strictConvexOn_rpow hq
+  have h_conv_rpow : ConvexOn ℝ (Set.Ici 0) (fun x : ℝ => x ^ q) :=
+    h_strict_rpow.convexOn
+  -- Per-term inequality (non-strict for all, strict at j₀).
+  have h_ha : (0 : ℝ) < (1 : ℝ)/2 := by norm_num
+  have h_hab : (1 : ℝ)/2 + 1/2 = 1 := by norm_num
+  -- Reshape midpoint to smul form for StrictConvexOn application.
+  have h_mid_eq : ∀ x y : ℝ, (x + y) / 2 = (1/2 : ℝ) • x + (1/2 : ℝ) • y := by
+    intros x y
+    simp [smul_eq_mul]; ring
+  -- Convert both sides to the `a • x + b • y` form that Mathlib uses.
+  rw [show ((∑ j, (p₁ j) ^ q + ∑ j, (p₂ j) ^ q) / 2 : ℝ) =
+         (1/2 : ℝ) • (∑ j, (p₁ j) ^ q) + (1/2 : ℝ) • (∑ j, (p₂ j) ^ q) from by
+     simp [smul_eq_mul]; ring]
+  have h_sum_eq :
+      ∑ j, ((p₁ j + p₂ j) / 2) ^ q =
+      ∑ j, ((1/2 : ℝ) • (p₁ j) + (1/2 : ℝ) • (p₂ j)) ^ q := by
+    refine Finset.sum_congr rfl (fun j _ => ?_)
+    rw [← h_mid_eq]
+  rw [h_sum_eq]
+  -- Apply Finset.sum_lt_sum with the per-term inequality.
+  have h_rhs_eq :
+      (1/2 : ℝ) • (∑ j, (p₁ j) ^ q) + (1/2 : ℝ) • (∑ j, (p₂ j) ^ q) =
+      ∑ j, ((1/2 : ℝ) • (p₁ j) ^ q + (1/2 : ℝ) • (p₂ j) ^ q) := by
+    rw [Finset.smul_sum, Finset.smul_sum, ← Finset.sum_add_distrib]
+  rw [h_rhs_eq]
+  apply Finset.sum_lt_sum
+  · intros j _
+    exact h_conv_rpow.2 (h1_pos j).le (h2_pos j).le h_ha.le h_ha.le h_hab
+  · refine ⟨j₀, Finset.mem_univ _, ?_⟩
+    exact h_strict_rpow.2 (h1_pos j₀).le (h2_pos j₀).le hj₀ h_ha h_ha h_hab
+
+/-- **Strict concavity of Tsallis entropy at the midpoint** for `q > 1`.
+    For distinct positive `p₁ p₂`,
+    `S_q((p₁ + p₂)/2) > (S_q(p₁) + S_q(p₂))/2`.
+
+    Derived from `sum_rpow_strict_midpoint` via the Tsallis formula
+    `S_q = (1 - ∑ p^q) / (q - 1)` with `q - 1 > 0`. -/
+theorem tsallisEntropy_strict_midpoint {J : ℕ} {q : ℝ} (hq : 1 < q)
+    {p₁ p₂ : Fin J → ℝ}
+    (h1_pos : ∀ j, 0 < p₁ j) (h2_pos : ∀ j, 0 < p₂ j)
+    (hne : p₁ ≠ p₂) :
+    (tsallisEntropy J q p₁ + tsallisEntropy J q p₂) / 2 <
+    tsallisEntropy J q (fun j => (p₁ j + p₂ j) / 2) := by
+  have hq_ne : q ≠ 1 := ne_of_gt hq
+  have hq1_pos : 0 < q - 1 := by linarith
+  -- Unfold tsallisEntropy for q ≠ 1 branch.
+  have h_eq : ∀ p, tsallisEntropy J q p = (1 - ∑ j, (p j) ^ q) / (q - 1) := by
+    intro p
+    unfold tsallisEntropy
+    rw [if_neg hq_ne]
+  rw [h_eq p₁, h_eq p₂, h_eq (fun j => (p₁ j + p₂ j) / 2)]
+  -- Goal: ((1 - ∑ p₁^q)/(q-1) + (1 - ∑ p₂^q)/(q-1))/2
+  --     < (1 - ∑ ((p₁+p₂)/2)^q)/(q-1)
+  have h_core := sum_rpow_strict_midpoint hq h1_pos h2_pos hne
+  -- Algebraic manipulation: strict inequality survives division by q-1 > 0
+  -- and the (1 - ·) / (q-1) transformation.
+  -- Rewrite via the difference: target ↔ RHS − LHS > 0, expand, apply h_core.
+  rw [div_add_div_same]
+  rw [div_div, div_lt_div_iff₀ (by linarith : 0 < (q - 1) * 2) hq1_pos]
+  nlinarith [h_core]
+
+-- ============================================================
+-- Unique minimizer on the open simplex (Tsallis q > 1, T > 0)
+-- ============================================================
+
+/-- **Unique minimizer of `cesPotential` on the open simplex** for
+    `q > 1` and `T > 0`.
+
+    If two positive distributions `p₁, p₂` on the open simplex both
+    minimize `cesPotential J q T · ε`, they are equal. Proof by
+    midpoint contradiction: strict concavity of `S_q` at the midpoint
+    forces `Φ((p₁+p₂)/2) < (Φ(p₁) + Φ(p₂))/2 = Φ(p_min)`,
+    contradicting that `p₁` and `p₂` are minimizers.
+
+    **Regime restriction** (discovered during proof): currently handled
+    for `1 < q` only. The `0 < q < 1` and `q = 1` cases require
+    separate strict-concavity arguments (`Real.strictConcaveOn_rpow`
+    for 0 < q < 1; `strictConvexOn_mul_log` for Shannon q = 1). -/
+theorem cesPotential_unique_minimizer_tsallis {J : ℕ} {q T : ℝ}
+    (hq : 1 < q) (hT : 0 < T) (ε : Fin J → ℝ)
+    {p₁ p₂ : Fin J → ℝ}
+    (h1_pos : ∀ j, 0 < p₁ j) (h1_sum : ∑ j, p₁ j = 1)
+    (h2_pos : ∀ j, 0 < p₂ j) (h2_sum : ∑ j, p₂ j = 1)
+    (h1_min : ∀ p : Fin J → ℝ, (∀ j, 0 < p j) → ∑ j, p j = 1 →
+              cesPotential J q T p₁ ε ≤ cesPotential J q T p ε)
+    (h2_min : ∀ p : Fin J → ℝ, (∀ j, 0 < p j) → ∑ j, p j = 1 →
+              cesPotential J q T p₂ ε ≤ cesPotential J q T p ε) :
+    p₁ = p₂ := by
+  by_contra hne
+  -- Midpoint m = (p₁ + p₂) / 2.
+  set m : Fin J → ℝ := fun j => (p₁ j + p₂ j) / 2 with hm_def
+  have hm_pos : ∀ j, 0 < m j := by
+    intro j
+    simp only [hm_def]
+    have h1 := h1_pos j
+    have h2 := h2_pos j
+    linarith
+  have hm_sum : ∑ j, m j = 1 := by
+    show ∑ j, (p₁ j + p₂ j) / 2 = 1
+    rw [show (fun j => (p₁ j + p₂ j) / 2) =
+           (fun j => (1/2 : ℝ) * (p₁ j + p₂ j)) from by funext j; ring]
+    rw [← Finset.mul_sum, Finset.sum_add_distrib, h1_sum, h2_sum]
+    norm_num
+  -- Strict concavity of Tsallis entropy at the midpoint.
+  have h_strict_S := tsallisEntropy_strict_midpoint hq h1_pos h2_pos hne
+  -- Lift to strict convexity of Φ at the midpoint.
+  have h_strict_Φ : cesPotential J q T m ε <
+                    (cesPotential J q T p₁ ε + cesPotential J q T p₂ ε) / 2 := by
+    unfold cesPotential
+    -- Linear part agrees at midpoint: ∑ m · ε = (∑ p₁·ε + ∑ p₂·ε)/2.
+    have h_linear_mid :
+        ∑ j, m j * ε j = (∑ j, p₁ j * ε j + ∑ j, p₂ j * ε j) / 2 := by
+      show ∑ j, (p₁ j + p₂ j) / 2 * ε j = _
+      rw [show (fun j => (p₁ j + p₂ j) / 2 * ε j) =
+             (fun j => (p₁ j * ε j + p₂ j * ε j) / 2) from by funext j; ring]
+      rw [show (fun j => (p₁ j * ε j + p₂ j * ε j) / 2) =
+             (fun j => (1/2 : ℝ) * (p₁ j * ε j + p₂ j * ε j)) from by
+         funext j; ring]
+      rw [← Finset.mul_sum, Finset.sum_add_distrib]
+      ring
+    rw [h_linear_mid]
+    -- Remaining: (∑ p₁ε + ∑ p₂ε)/2 - T·S(m) < ((∑ p₁ε - T·S₁) + (∑ p₂ε - T·S₂))/2.
+    -- Simplifies to: -T·S(m) < -T·(S₁ + S₂)/2, i.e., T·S(m) > T·(S₁ + S₂)/2.
+    nlinarith [h_strict_S, hT]
+  -- p₁ and p₂ are minimizers, so Φ(p₁) ≤ Φ(m) and Φ(p₂) ≤ Φ(m).
+  have h_min_m_1 := h1_min m hm_pos hm_sum
+  have h_min_m_2 := h2_min m hm_pos hm_sum
+  -- Combined with h_strict_Φ: contradiction (Φ(m) < (Φ(p₁)+Φ(p₂))/2 ≤ Φ(m)).
+  linarith
+
 /-- **Theorem 8 (Lyapunov Property)** — Section 7.4 of Paper 2.
 
     The CES potential Φ_q serves as a Lyapunov function for the
@@ -262,16 +418,17 @@ theorem cesPotential_lyapunov_antitone
 
     (i) Φ_q is bounded above (by the optimal value at p*)
     (ii) dΦ_q/dt ≤ 0 along the gradient flow (monotone decrease)
-    (iii) Φ_q has a unique minimizer on the simplex (p* from Prop 3)
+    (iii) Φ_q has a unique minimizer on the open simplex (p* from Prop 3)
 
     These three properties ensure global convergence of any
     gradient-based adjustment process to the q-exponential equilibrium.
 
-    Parts (i) and (ii) are now **proved** (not axiomatized). Part (ii)
-    is witnessed by `cesPotential_lyapunov_antitone` above: whenever a
-    trajectory is a gradient-flow trajectory (`IsGradientFlow`), the
-    potential is antitone. Part (iii) remains a placeholder pending
-    strict concavity of Tsallis entropy on the open simplex. -/
+    Parts (i), (ii), and (iii) are now **all proved** (not axiomatized).
+    Part (ii) is witnessed by `cesPotential_lyapunov_antitone` above
+    (gradient-flow antitone). Part (iii) is witnessed by
+    `cesPotential_unique_minimizer_tsallis` for the Tsallis `q > 1, T > 0`
+    regime (via strict midpoint concavity of `S_q`); the `q = 1` Shannon
+    and `0 < q < 1` Tsallis regimes are deferred to future work. -/
 structure LyapunovProperty (J : ℕ) (q T : ℝ) where
   /-- The CES potential is bounded above. -/
   bounded_above : ∃ M : ℝ, ∀ p ε : Fin J → ℝ, OnSimplex J p →
@@ -282,8 +439,19 @@ structure LyapunovProperty (J : ℕ) (q T : ℝ) where
   monotone_decrease : ∀ (ε : Fin J → ℝ) (p g : ℝ → Fin J → ℝ),
     IsGradientFlow J q T ε p g →
     Antitone (fun s => cesPotential J q T (p s) ε)
-  /-- The CES potential has a unique minimizer. -/
-  unique_minimizer : True  -- axiomatized: requires strict concavity of S_q
+  /-- **Unique minimizer on the open simplex** for `q > 1, T > 0`.
+      Any two positive distributions that both minimize `cesPotential`
+      are equal — via strict midpoint concavity of `S_q`. Witnessed by
+      `cesPotential_unique_minimizer_tsallis`. Upgraded from the
+      `: True` placeholder. The `q ≤ 1` regimes are deferred. -/
+  unique_minimizer : 1 < q → 0 < T → ∀ (ε : Fin J → ℝ) (p₁ p₂ : Fin J → ℝ),
+    (∀ j, 0 < p₁ j) → ∑ j, p₁ j = 1 →
+    (∀ j, 0 < p₂ j) → ∑ j, p₂ j = 1 →
+    (∀ p, (∀ j, 0 < p j) → ∑ j, p j = 1 →
+      cesPotential J q T p₁ ε ≤ cesPotential J q T p ε) →
+    (∀ p, (∀ j, 0 < p j) → ∑ j, p j = 1 →
+      cesPotential J q T p₂ ε ≤ cesPotential J q T p ε) →
+    p₁ = p₂
 
 /-- **Constructor for `LyapunovProperty`.** Given a bound for part (i),
     the full structure is populated: part (ii) via
@@ -295,7 +463,9 @@ def LyapunovProperty.of_bounded {J : ℕ} (q T : ℝ)
   { bounded_above := h_bounded,
     monotone_decrease := fun _ _ _ hflow =>
       cesPotential_lyapunov_antitone hflow,
-    unique_minimizer := trivial }
+    unique_minimizer := fun hq hT ε p₁ p₂ h1_pos h1_sum h2_pos h2_sum h1_min h2_min =>
+      cesPotential_unique_minimizer_tsallis hq hT ε h1_pos h1_sum h2_pos h2_sum
+        h1_min h2_min }
 
 -- cesPotential_bounded: removed (dead axiom, provable from simplex compactness but never used downstream)
 
