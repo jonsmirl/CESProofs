@@ -111,36 +111,7 @@ theorem weightedArithMean_isPowerMean {J : ℕ} (p : Fin J → ℕ)
   weighted_aczel_rational (weightedArithMean p) p (hasSymExt_arith p hp)
 
 -- ============================================================
--- Section 4: Concrete network example (2×2 uniform)
--- ============================================================
-
-/-- Uniform 2×2 network: W_{ij} = 1 for all i, j. -/
-def W2 : NetworkMatrix 2 := fun _ _ => 1
-
-/-- Each component G_i: weighted arithmetic mean with weights
-    `levelCount (W2 i ·)`. Choosing G's weights to match `levelCount W`
-    avoids a function-equality rewrite at the HasSymExtension step. -/
-def G2 : NetworkAggFun 2 :=
-  fun i => weightedArithMean (levelCount (fun j => W2 i j))
-
-/-- **API check**: `generalized_aczel_network` applies cleanly to the
-    concrete 2×2 uniform network. -/
-theorem G2_isNetworkCES : IsNetworkCES G2 W2 := by
-  apply generalized_aczel_network (by norm_num : (2 : ℕ) ≤ 2) G2 W2
-    (by trivial : IsConnectedNetwork W2)
-    (by intro _ _ _ _ _; rfl : NetA3_ScaleConsistent G2)
-  intro i
-  -- Goal: HasSymExtension (G2 i) (levelCount (fun j => W2 i j))
-  -- G2 i = weightedArithMean (levelCount (fun j => W2 i j)) by def.
-  -- So we can apply `hasSymExt_arith` directly; need only 0 < ∑ p.
-  have hp : 0 < (∑ j, levelCount (fun j => W2 i j) j : ℕ) := by
-    apply Finset.sum_pos
-    · intro j _; exact levelCount_pos _ _
-    · exact Finset.univ_nonempty
-  exact hasSymExt_arith (levelCount (fun j => W2 i j)) hp
-
--- ============================================================
--- Section 5: D6 — concrete `AggFamily` instance
+-- Section 4: D6 — concrete `AggFamily` instance
 -- ============================================================
 
 /-- Uniform arithmetic mean at each arity:
@@ -205,6 +176,43 @@ def arithmeticMeanFamily : AggFamily where
 example {J : ℕ} (p : Fin J → ℕ) :
     HasSymExtension (arithmeticMeanFamily.weightedOfFiber p) p :=
   arithmeticMeanFamily.hasSymExtension p
+
+-- ============================================================
+-- Section 5: Concrete network example (2×2 uniform) via D6 path
+-- ============================================================
+
+/-- Uniform 2×2 network: W_{ij} = 1 for all i, j. -/
+def W2 : NetworkMatrix 2 := fun _ _ => 1
+
+/-- Each component G_i: the arithmetic-mean family's fiber-weighted
+    aggregator at multiplicity profile `levelCount (W2 i ·)`. This goes
+    through the **D6 `AggFamily` pipeline** (as opposed to the Phase 3b
+    direct construction via `weightedArithMean`).
+
+    Extensionally equal to `weightedArithMean (levelCount ...)` — both
+    compute `∑ j, (p j / N) * x j` — but constructed via
+    `arithmeticMeanFamily.weightedOfFiber` so that the
+    `HasSymExtension` proof arrives from `AggFamily.hasSymExtension`
+    (zero custom axioms). -/
+def G2 : NetworkAggFun 2 :=
+  fun i => arithmeticMeanFamily.weightedOfFiber (levelCount (fun j => W2 i j))
+
+/-- **API check (D6 consolidation)**: `generalized_aczel_network` applies
+    cleanly to the concrete 2×2 uniform network when each `G i` is sourced
+    from `arithmeticMeanFamily.weightedOfFiber`. The `HasSymExtension`
+    hypothesis is discharged by `arithmeticMeanFamily.hasSymExtension`,
+    demonstrating the full D6 pipeline end-to-end. -/
+theorem G2_isNetworkCES : IsNetworkCES G2 W2 := by
+  apply generalized_aczel_network (by norm_num : (2 : ℕ) ≤ 2) G2 W2
+    (by trivial : IsConnectedNetwork W2)
+    (by intro _ _ _ _ _; rfl : NetA3_ScaleConsistent G2)
+  intro i
+  -- Goal: HasSymExtension (G2 i) (levelCount (fun j => W2 i j))
+  -- By definition of G2, this is
+  --   HasSymExtension (arithmeticMeanFamily.weightedOfFiber (levelCount ...))
+  --                   (levelCount ...)
+  -- which is exactly what arithmeticMeanFamily.hasSymExtension provides.
+  exact arithmeticMeanFamily.hasSymExtension (levelCount (fun j => W2 i j))
 
 end Phase3bExamples
 
