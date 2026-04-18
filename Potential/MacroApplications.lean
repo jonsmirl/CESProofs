@@ -17,9 +17,18 @@
   Key insight: the single parameter K = (1-ρ)(J-1)/J simultaneously
   determines the Keynesian multiplier, the sectoral ordering of
   recessions, and the stagflation mechanism.
+
+  ### A3-iteration context (Phase 3 re-rooting)
+
+  The effective-curvature parameter `K_eff = K · (1 - T/T*)⁺` is
+  the T-dependent projection of K along the A3-iteration critical
+  manifold. Macroeconomic resilience degrades as the iteration's
+  fast-mode decay rate (`Foundations.Emergence.modeAfterL_eq_exp_decay`)
+  approaches zero. See `research/demographics/A3_encodes_time.md`.
 -/
 
 import CESProofs.Potential.BilateralTrade
+import CESProofs.Foundations.Emergence
 
 open Real Finset BigOperators
 

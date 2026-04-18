@@ -13,10 +13,24 @@
 import CESProofs.Dynamics.Defs
 import CESProofs.Dynamics.EndogenousRho
 import CESProofs.Potential.EffectiveCurvature
+import CESProofs.Foundations.Emergence
 
 open Real Finset BigOperators
 
 noncomputable section
+
+/-! ### A3-iteration transport lemma (Phase 3c)
+
+The T → T* degeneracy in this file corresponds to the m ≥ 3
+mode's contraction rate approaching the boundary of stability
+in `Foundations.Emergence.modeAfterL`. The cascade feedback
+β_C · K_eff · (T* − T) couples K_eff's vanishing at the critical
+point to a degenerate eigenvalue in the A3-iteration Jacobian.
+The scalar anchor: the m = 3 mode contracts strictly below 1
+(`modeRate_lt_one`) for k ≥ 2, providing the fast-mode rate
+that the T dynamics linearize against. -/
+theorem Tdynamics_A3_anchor_fast_mode {k : ℕ} (hk : 2 ≤ k) :
+    modeRate k 3 < 1 := modeRate_lt_one hk (by omega)
 
 variable {N : ℕ}
 

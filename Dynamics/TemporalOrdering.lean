@@ -12,11 +12,21 @@
   - curvature_conservation (FurtherProperties.lean): |eig_F|*|eig_C| = const
   - sectorRelaxRate (Paper3/Defs.lean): slow-world adjustment rate
   - escortFisherEigenvalue (InformationGeometry.lean): fast-world curvature
+
+  ### A3-iteration context (Phase 3 re-rooting)
+
+  The two-world separation is the coarse-graining of A3 iteration at
+  two different scales. The scalar fingerprint in
+  `Foundations.Emergence` (`modeAfterL_semigroup`) is the minimal
+  Lean-level anchor; the ordering rules are corollaries of A3
+  iteration at separated speeds. See
+  `research/demographics/A3_encodes_time.md`.
 -/
 
 import CESProofs.Dynamics.TwoWorldDefs
 import CESProofs.Foundations.InformationGeometry
 import CESProofs.Foundations.CESEstimation
+import CESProofs.Foundations.Emergence
 
 open Real Finset BigOperators
 

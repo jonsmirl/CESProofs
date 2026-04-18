@@ -17,9 +17,19 @@
   - Competitive exclusion (Arrow): substitute inputs → specialize
   - Platform competition: substitutable platforms → monopoly/oligopoly
   - Schelling segregation: anti-complementarity → clustering
+
+  ### A3-iteration context (Phase 3 re-rooting)
+
+  The ρ > 1 regime is a second aggregation-invariant class under
+  A3: a distinct fixed line in the iteration semigroup's
+  parameter manifold. The scalar fingerprint
+  `Foundations.Emergence.modeAfterL_eq_exp_decay` at m = 2 captures
+  the marginal direction (ρ as coordinate) common to both regimes.
+  See `research/demographics/A3_encodes_time.md`.
 -/
 
 import CESProofs.Foundations.Hessian
+import CESProofs.Foundations.Emergence
 import CESProofs.CurvatureRoles.Superadditivity
 import CESProofs.CurvatureRoles.CorrelationRobust
 import CESProofs.Potential.Defs

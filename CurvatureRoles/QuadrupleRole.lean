@@ -9,6 +9,14 @@
   (d) Network scaling — G(J) = J^{1/ρ} · c
   (e) Statistical estimation — production curvature = bridge ratio × Fisher info
   (f) Phase ordering — K_eff = K · max(0, 1-T/T*)
+
+  ### A3-iteration context (Phase 3 re-rooting)
+
+  Each of the six roles is a property preserved under A3-iteration
+  coarse-graining: K is exactly marginal (mode m=2 in the scalar
+  fingerprint `Foundations.Emergence.modeAfterL`) and labels the
+  aggregation-invariant class. See
+  `research/demographics/A3_encodes_time.md`.
 -/
 
 import CESProofs.CurvatureRoles.Superadditivity
@@ -17,6 +25,7 @@ import CESProofs.CurvatureRoles.Strategic
 import CESProofs.CurvatureRoles.NetworkCES
 import CESProofs.Foundations.InformationGeometry
 import CESProofs.CurvatureRoles.PhaseTransition
+import CESProofs.Foundations.Emergence
 
 open Real Finset BigOperators
 

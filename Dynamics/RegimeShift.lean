@@ -4,10 +4,19 @@
   Theorem 3c.2: Fold bifurcation
   Theorem 3c.3: Hysteresis
   Corollary 3c.1: Irreversibility of adoption
+
+  ### A3-iteration context (Phase 3 re-rooting)
+
+  The fold bifurcation here is the topology change of the A3
+  iteration's fixed-point set at a degenerate Jacobian eigenvalue
+  — the same critical-manifold structure that the scalar fingerprint
+  `Foundations.Emergence.modeAfterL_eq_exp_decay` tracks at the
+  decay-rate level. See `research/demographics/A3_encodes_time.md`.
 -/
 
 import CESProofs.Dynamics.EntryExitDynamics
 import CESProofs.EntryExit.Calculus
+import CESProofs.Foundations.Emergence
 
 open Real Finset BigOperators
 

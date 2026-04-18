@@ -15,9 +15,19 @@
   Also formalizes:
   - Kramers escape rate: r_k = (ℓ ω₀ ω_b / 2π) exp(-ΔΦ/T)
   - Crooks detailed balance ratio: P_F/P_R = exp((W - ΔF)/T)
+
+  ### A3-iteration context (Phase 3 re-rooting)
+
+  The Gibbs partition function and its cumulants are the ensemble
+  "mode amplitudes" — the VRI is the second-cumulant identity of
+  log Z, matching the A3-iteration scalar-fingerprint picture
+  (`Foundations.Emergence.modeAfterL_eq_exp_decay`). See
+  `research/demographics/logZ_is_the_master_generator.md` for the
+  narrative that log Z is the master object.
 -/
 
 import CESProofs.Dynamics.Defs
+import CESProofs.Foundations.Emergence
 import Mathlib.Analysis.SpecialFunctions.ExpDeriv
 import Mathlib.Analysis.Calculus.Deriv.Inv
 import Mathlib.Algebra.BigOperators.Field

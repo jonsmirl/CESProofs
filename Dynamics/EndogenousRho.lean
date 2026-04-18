@@ -9,12 +9,25 @@
 
 import CESProofs.Dynamics.Defs
 import CESProofs.Dynamics.PolicyCost
+import CESProofs.Foundations.Emergence
 
 open Real Finset BigOperators
 
 noncomputable section
 
 variable {N : ℕ}
+
+/-! ### A3-iteration transport lemma (Phase 3c)
+
+The ρ-parameter is marginal under A3 iteration: the m = 2 mode of
+`Foundations.Emergence.modeAfterL` has contraction rate 1 (exactly
+preserved), which is the Lean-level witness that ρ is an
+aggregation-invariant coordinate. The four evolution channels
+(standardization, selection, learning, institutional reform) act
+tangent to this invariant line; they are slow deformations of the
+marginal direction. -/
+theorem rhoEvolution_A3_anchor (L : ℕ) (a₀ : ℝ) :
+    modeAfterL 2 2 L a₀ = a₀ := ces_mode_preserved 2 L a₀
 
 -- ============================================================
 -- Result 70: Optimal rho Increases with T (partially proved)

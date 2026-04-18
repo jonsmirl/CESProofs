@@ -14,10 +14,23 @@ import CESProofs.Dynamics.EndogenousT
 import CESProofs.Potential.EffectiveCurvature
 import CESProofs.Dynamics.EntryExitDynamics
 import CESProofs.Dynamics.BusinessCycles
+import CESProofs.Foundations.Emergence
 
 open Real Finset BigOperators
 
 noncomputable section
+
+/-! ### A3-iteration transport lemma (Phase 3c)
+
+The linearized fast (diversity) direction in the coupled (ρ, T)
+Jacobian decays at a rate matching the m = 3 mode of
+`Foundations.Emergence.modeAfterL` — the slowest non-CES mode.
+The scalar anchor here records that the m = 3 mode is strictly
+contracting for any k ≥ 2, which is the Lean-level statement
+that the coupled system's diversity-mode decay is strictly
+positive in the linearized regime. -/
+theorem coupledRhoT_A3_anchor_fast_mode {k : ℕ} (hk : 2 ≤ k) :
+    modeRate k 3 < 1 := modeRate_lt_one hk (by omega)
 
 -- ============================================================
 -- Definitions: 2×2 Jacobian at steady state

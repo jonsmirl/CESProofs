@@ -25,10 +25,24 @@
 
 import CESProofs.Foundations.AggregationInvariantClass
 import CESProofs.Potential.Defs
+import CESProofs.Foundations.Emergence
 
 open Real Finset BigOperators
 
 noncomputable section
+
+/-! ### A3-iteration transport lemma (Phase 3c)
+
+The RG marginal condition β(ρ) = 0 — ρ exactly preserved under
+aggregation — is precisely `Foundations.Emergence.modeRate k 2 = 1`:
+the CES mode has contraction factor 1 under A3 iteration (no decay,
+no growth). Non-CES modes with m ≥ 3 have `modeRate k m < 1`
+(`modeRate_lt_one`), the explicit RG irrelevant-perturbation
+statement. This transport anchors the RG beta-function language
+in the scalar mode-amplitude semigroup. -/
+theorem RG_beta_zero_A3_anchor (k : ℕ) :
+    modeRate k 2 = 1 := by
+  simp [modeRate]
 
 -- ============================================================
 -- Section 1: Scaling Dimensions

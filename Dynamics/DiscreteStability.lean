@@ -11,10 +11,21 @@
   period-2 oscillations emerge — the "Edge of Stability" (Cohen et al. 2021).
 
   15 theorems, 0 sorry, 0 custom axioms.
+
+  ### A3-iteration context (Phase 3 re-rooting)
+
+  The discrete iteration here specializes the A3 scale-consistency
+  semigroup. The scalar per-mode fingerprint
+  (`Foundations.Emergence.modeAfterL_semigroup`,
+  `modeAfterL_eq_exp_decay`) is the minimal Lean-level bridge
+  between this per-layer recursion and the continuous-flow picture
+  of Papers C/D. See `research/demographics/A3_encodes_time.md`
+  for the narrative.
 -/
 
 import CESProofs.Foundations.Hessian
 import CESProofs.Foundations.Defs
+import CESProofs.Foundations.Emergence
 import Mathlib.Analysis.SpecificLimits.Basic
 
 open Real Finset BigOperators Filter

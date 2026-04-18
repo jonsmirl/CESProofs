@@ -26,9 +26,19 @@
   complementarity even if average ρ is low, because the "bottleneck"
   pair dominates. The Fiedler vector identifies which partition of
   sectors is most vulnerable to disruption.
+
+  ### A3-iteration context (Phase 3 re-rooting)
+
+  Under A3 iteration on weighted networks, the spectral gap λ₂ plays
+  the role that K plays in uniform CES: a generalization of the
+  marginal mode in the scalar fingerprint
+  `Foundations.Emergence.modeAfterL`. Network fragmentation ↔
+  spectral gap shrinkage ↔ mode-mixing under A3 iteration. See
+  `research/demographics/A3_encodes_time.md`.
 -/
 
 import CESProofs.Foundations.Hessian
+import CESProofs.Foundations.Emergence
 import Mathlib.Algebra.BigOperators.Field
 import Mathlib.Topology.MetricSpace.ProperSpace
 
