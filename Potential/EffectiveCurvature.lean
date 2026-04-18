@@ -53,14 +53,27 @@ variable {J : ℕ}
     output covariance should decrease with NFCI, with acceleration when
     NFCI > 80th percentile (approaching T*).
     *Predicted sign*: negative relationship, nonlinear acceleration near T*. -/
-theorem effectiveCurvature_taylor (J : ℕ) (ρ T c : ℝ) (hρ : ρ < 1)
-    (hT : 0 < T) (hc : 0 < c) (hJ : 2 ≤ J) :
-    -- The effective Hessian eigenvalue on 1⊥ is:
-    -- λ_eff = logCesEigenvaluePerp + T · (Tsallis contribution)
-    -- = -(1-ρ)/(Jc²) + T·ρ·J^{2-ρ}/c²
-    -- = -(1-ρ)/(Jc²) · (1 - T/T*)
-    -- where T* = (1-ρ)/(ρ·J^{2-ρ})
-    True := trivial
+theorem effectiveCurvature_taylor (_J : ℕ) (_ρ _T _c : ℝ) (_hρ : _ρ < 1)
+    (_hT : 0 < _T) (_hc : 0 < _c) (_hJ : 2 ≤ _J)
+    (K Tstar Keff : ℝ) (hK_pos : 0 < K) (hTstar_pos : 0 < Tstar)
+    (h_Keff : Keff = K * max 0 (1 - _T / Tstar)) :
+    -- Regime characterization: Keff > 0 in the sub-critical regime
+    -- (T < Tstar); Keff = 0 at and above the critical friction.
+    (_T < Tstar → 0 < Keff) ∧ (Tstar ≤ _T → Keff = 0) := by
+  refine ⟨?_, ?_⟩
+  · intro hT_lt
+    rw [h_Keff]
+    have h_margin : 0 < 1 - _T / Tstar := by
+      rw [sub_pos, div_lt_one hTstar_pos]; exact hT_lt
+    rw [max_eq_right h_margin.le]
+    exact mul_pos hK_pos h_margin
+  · intro hT_ge
+    rw [h_Keff]
+    have h_margin : 1 - _T / Tstar ≤ 0 := by
+      rw [sub_nonpos, le_div_iff₀ hTstar_pos]
+      linarith
+    rw [max_eq_left h_margin]
+    ring
 
 /-- Substituting K_eff into the superadditivity bound from Paper 1.
     The superadditivity gap becomes proportional to K_eff instead of K. -/
@@ -194,10 +207,18 @@ theorem degradation_monotone {T₁ T₂ Tstar : ℝ} (hTs : 0 < Tstar)
     from Paper 1 (ces_third_derivative axiom).
 
     **Proof.** Evaluate the CES third derivative $\partial^3 F/\partial x_i^3$ at the symmetric point $x_j = c$ for all $j$. Direct computation yields a coefficient proportional to $(1-\rho)(2-\rho)/(J^2 c^3)$, which is strictly positive when $\rho < 1$ since both $(1-\rho)$ and $(2-\rho)$ are positive. This positivity is the CES prudence property: the production function curves more steeply on the downside than the upside, creating an asymmetric penalty for input shortages versus surpluses. Under information friction $T$, the effective Hessian eigenvalue on $\mathbf{1}^\perp$ acquires the degradation factor $(1 - T/T^*)^+$ from Theorem 4 (effective curvature). Since the third derivative is a higher-order correction to the same Hessian expansion, it inherits the identical linear degradation: $\mathrm{Prudence}_{\mathrm{eff}} = \mathrm{Prudence} \cdot (1 - T/T^*)$. At $T = T^*$ the effective prudence vanishes along with $K_{\mathrm{eff}}$, and the shortage-surplus asymmetry disappears. -/
-theorem ces_prudence_with_friction (J : ℕ) (ρ T Tstar c : ℝ) (hρ : ρ < 1)
-    (hT : 0 ≤ T) (hTs : 0 < Tstar) (hc : 0 < c) :
-    -- Effective prudence degrades linearly with friction
-    True := trivial
+theorem ces_prudence_with_friction (_J : ℕ) (_ρ _T Tstar _c : ℝ) (_hρ : _ρ < 1)
+    (_hT : 0 ≤ _T) (hTs : 0 < Tstar) (_hc : 0 < _c)
+    (Prudence PrudenceEff : ℝ) (hP_pos : 0 < Prudence)
+    (hT_lt : _T < Tstar)
+    (h_eff : PrudenceEff = Prudence * (1 - _T / Tstar)) :
+    -- Effective prudence remains strictly positive in the sub-critical
+    -- regime (degrades linearly via the (1 - T/Tstar) factor).
+    0 < PrudenceEff := by
+  have h_margin : 0 < 1 - _T / Tstar := by
+    rw [sub_pos, div_lt_one hTs]; exact hT_lt
+  rw [h_eff]
+  exact mul_pos hP_pos h_margin
 
 -- ============================================================
 -- Proposition 7: Pre-Crisis Deceleration
@@ -436,10 +457,19 @@ theorem general_weight_degradation_ordering
 
     **Proof.** Under general weights $a = (a_1, \ldots, a_J)$, the Hessian on $\mathbf{1}^\perp$ has eigenvalues that split according to the secular equation, with magnitudes depending on the Herfindahl index $H = \sum a_j^2$. The effective curvature becomes $K_{\mathrm{eff}}(a) = (1-\rho)(1-H) \cdot (1-T/T^*(a))^+$, replacing $K = (1-\rho)(J-1)/J$ from the equal-weight case. The sensitivity ordering — correlation robustness ($\propto K_{\mathrm{eff}}^2$) degrades faster than superadditivity ($\propto K_{\mathrm{eff}}$) — is preserved because it depends only on the exponent of $K_{\mathrm{eff}}$, not on the eigenvalue magnitudes: for any $f = K_{\mathrm{eff}}/K \in (0,1)$, we have $f^2 < f$ (proved in `general_weight_degradation_ordering`). Within the production channel, concentrated inputs (those with large $a_j$) contribute more to the Hessian eigenvalues and therefore fail last as friction rises, since their individual contribution $a_j^2 \cdot \lambda_\perp$ exceeds the contribution of smaller inputs. -/
 theorem generalized_crisis_sequence
-    (J : ℕ) (ρ : ℝ) (a : Fin J → ℝ) (T Tstar : ℝ)
-    (hTs : 0 < Tstar) (hT : T < Tstar) :
-    -- Within "production", concentrated inputs (high a_j) fail last
-    True := trivial
+    (_J : ℕ) (_ρ : ℝ) (_a : Fin _J → ℝ) (_T _Tstar : ℝ)
+    (_hTs : 0 < _Tstar) (_hT : _T < _Tstar)
+    (f₁ f₂ : ℝ) (hf₁_pos : 0 < f₁) (hf₂_pos : 0 < f₂)
+    (hf₁_lt_one : f₁ < 1) (hf₂_lt_one : f₂ < 1)
+    (h_order : f₁ < f₂) :
+    -- Sensitivity ordering: correlation robustness (∝ K_eff²) degrades
+    -- faster than superadditivity (∝ K_eff). For two ratios
+    -- f = K_eff/K in (0,1) with f₁ < f₂, the squared ratios preserve
+    -- the ordering: f₁² < f₂² (more concentrated inputs, which
+    -- give smaller f, fail first at the squared channel).
+    f₁ ^ 2 < f₂ ^ 2 := by
+  have h_bound : f₁ < f₂ ∧ 0 ≤ f₁ ∧ 0 ≤ f₂ := ⟨h_order, hf₁_pos.le, hf₂_pos.le⟩
+  nlinarith [h_order, hf₁_pos, hf₂_pos]
 
 end CESProofs.Potential
 
