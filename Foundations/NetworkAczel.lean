@@ -222,25 +222,15 @@ axiom lit_multi_scale_rho_common {J : ℕ}
 theorem network_per_component_power_mean
     {J : ℕ} (_hJ : 0 < J)
     (G : NetworkAggFun J) (W : NetworkMatrix J)
-    (hW_nn : IsNonNegNetwork W)
-    (h1 : NetA1_Homogeneity G)
-    (h2' : NetA2prime_WeightedSymmetry G W)
-    (h3 : NetA3_ScaleConsistent G)
-    (hcont : ∀ (i : Fin J), IsContinuousAgg J (G i))
-    (hincr : ∀ (i : Fin J), IsStrictlyIncreasing J (G i)) :
+    (h_ext : ∀ (i : Fin J),
+      HasSymExtension (G i) (levelCount (fun j => W i j))) :
     ∀ (i : Fin J), ∃ (ρ_i : ℝ) (_hρ : ρ_i ≠ 0) (a_i : Fin J → ℝ),
       (∀ (j k : Fin J), W i j = W i k → a_i j = a_i k) ∧
       (∀ (x : Fin J → ℝ), G i x = (∑ j, a_i j * (x j) ^ ρ_i) ^ (1 / ρ_i)) := by
   intro i
-  -- Package A2' at node i as the symmetry hypothesis required by
-  -- `weighted_aczel_real`, using the weight function w := (W i ·).
-  have hsym : ∀ (σ : Equiv.Perm (Fin J)),
-                (∀ (j : Fin J), W i (σ j) = W i j) →
-                ∀ (x : Fin J → ℝ), G i (x ∘ σ.symm) = G i x := by
-    intro σ hσ x
-    exact h2' i σ hσ x
-  exact weighted_aczel_real (G i) (fun j => W i j)
-    (fun j => hW_nn i j) (hcont i) (hincr i) (h1 i) (h3 i) hsym
+  -- Apply `weighted_aczel_real` with w := (W i ·); the Phase 3b refactor
+  -- threads the required symmetric-extension data through `h_ext`.
+  exact weighted_aczel_real (G i) (fun j => W i j) (h_ext i)
 
 -- ============================================================
 -- Section 5: Common ρ across components
@@ -315,22 +305,20 @@ def IsNetworkCES {J : ℕ} (G : NetworkAggFun J) (W : NetworkMatrix J) : Prop :=
 theorem generalized_aczel_network
     {J : ℕ} (hJ : 2 ≤ J)
     (G : NetworkAggFun J) (W : NetworkMatrix J)
-    (hW_nn : IsNonNegNetwork W)
     (hW_connected : IsConnectedNetwork W)
-    (h1 : NetA1_Homogeneity G)
-    (h2' : NetA2prime_WeightedSymmetry G W)
     (h3 : NetA3_ScaleConsistent G)
-    (hcont : ∀ (i : Fin J), IsContinuousAgg J (G i))
-    (hincr : ∀ (i : Fin J), IsStrictlyIncreasing J (G i)) :
+    (h_ext : ∀ (i : Fin J),
+      HasSymExtension (G i) (levelCount (fun j => W i j))) :
     IsNetworkCES G W := by
   -- Step 1: per-component weighted power-mean form with level-set-compatible
-  -- weights (via `lit_weighted_aczel`).
+  -- weights (via `weighted_aczel_real`, Phase 3b signature).
   have hJpos : 0 < J := by omega
   have step1 :=
-    network_per_component_power_mean hJpos G W hW_nn h1 h2' h3 hcont hincr
+    network_per_component_power_mean hJpos G W h_ext
   -- Step 2: common ρ with level-set compatibility preserved across components
-  -- (via `lit_multi_scale_rho_common`, which threads the compatibility datum
-  -- through the multi-scale associativity collapse).
+  -- (via `lit_multi_scale_rho_common`, the only remaining custom axiom,
+  -- which threads the compatibility datum through the multi-scale
+  -- associativity collapse).
   obtain ⟨ρ, hρ, a, hcompat, hform⟩ :=
     network_common_rho hJpos G W hW_connected h3 step1
   -- Step 3: assemble.

@@ -6,39 +6,62 @@
   to the classical `lit_aczel` via the standard *input replication* argument
   for rational weights, plus continuity for the irrational closure.
 
-  STATUS (April 2026 — Phase 3a complete, zero sorry, one axiom remaining):
-    * ✅ Replication sum-invariance lemma `sum_replicate_sigma`: proved, zero
-      axioms. (The combinatorial core of the replication argument.)
-    * ✅ Level-set-rank trick `levelCount` / `levelCount_eq_iff`: proved, zero
-      axioms. (Maps real weights to integer multiplicities with equivalent
-      level-set structure.)
-    * ✅ `aczel_via_replication`: PROVED (Phase 3a). Arity transport from
-      the Σ-type `(j : Fin J) × Fin (p j)` to `Fin N` (where N = ∑ p j) via
-      `Fintype.equivFin`, giving a fully-symmetric N-ary aggregator F' on
-      Fin N; then `emergent_CES` applied to F' forces power-mean form; the
-      sum-replication identity translates back to weighted form on F.
-    * ✅ `weighted_aczel_rational`: proved modulo ONE remaining axiom
-      `lit_symmetric_extension` (existence of symmetric N-ary extension).
-    * ✅ `weighted_aczel_real`: PROVED via the level-set-rank trick from
-      `weighted_aczel_rational`, using NO continuity-closure argument.
-    * ✅ NetworkAczel.lean uses `weighted_aczel_real` instead of
-      `lit_weighted_aczel`. That axiom is removed from NetworkAczel.
+  STATUS (April 2026 — Phase 3b complete, zero sorry, zero axioms in file):
+    * ✅ `sum_replicate_sigma`: proved, zero axioms.
+    * ✅ `levelCount` / `levelCount_eq_iff`: proved, zero axioms.
+    * ✅ `aczel_via_replication`: PROVED (Phase 3a). Arity transport via
+      `Fintype.equivFin` + `emergent_CES` + `sum_replicate_sigma`.
+    * ✅ `HasSymExtension`: structure (Phase 3b). Replaces the Phase 2 axiom
+      `lit_symmetric_extension`. Bundles the assumption that F admits a
+      fully-symmetric N-ary extension `Ftilde` on the Σ-type. The theorem
+      stack now takes a `HasSymExtension` hypothesis at application sites
+      rather than discharging via axiom.
+    * ✅ `weighted_aczel_rational`: proved, zero axioms in file. Takes
+      `HasSymExtension F p` as hypothesis.
+    * ✅ `weighted_aczel_real`: proved, zero axioms. Takes
+      `HasSymExtension F (levelCount w)` as hypothesis.
+    * ✅ NetworkAczel.lean: `network_per_component_power_mean` and
+      `generalized_aczel_network` take per-component `HasSymExtension`
+      hypotheses.
+
+  WHY PHASE 3B IS A REFACTOR, NOT A DIRECT CLOSURE:
+    The classical construction (Aczél-Dhombres 1989 Ch. 15) of `Ftilde`
+    from `F` alone requires ARITY-INDEXED scale consistency (Discovery D6).
+    Our `IsScaleConsistent` is a single-arity placeholder, providing
+    insufficient structure to construct `Ftilde` from `F` directly:
+      * On the S_N-orbit of fiber-constant inputs (J-dim subset of ℝ^N),
+        `Ftilde` is determined by `F` and weighted symmetry.
+      * Off this orbit (measure-zero extension problem), `Ftilde` is
+        underdetermined without additional structure.
+      * Any attempted "canonical" formula (sort+block-mean, order statistics,
+        projection) fails to agree with `F` on non-sorted fiber-constant
+        inputs — for `p = (1,2,2)` and `x = (5,3,4)`, block-mean construction
+        yields `F(3, 3.5, 4.5) ≠ F(5, 3, 4)`.
+    Phase 3b therefore relocates the axiomatic content to a hypothesis
+    structure `HasSymExtension` that callers supply. A future D6 refactor
+    introducing a proper `AggFamily` structure with real arity-indexed
+    scale consistency would derive `HasSymExtension` from family membership,
+    eliminating the axiomatic content entirely.
 
   AXIOM COUNT CHANGES:
-    Phase 1: 2 new lit_ axioms (weighted + multi-scale).
-    Phase 2: 3 new lit_ axioms (symmetric_extension + aczel_via_replication +
-             multi-scale).
-    Phase 3a: 2 new lit_ axioms (symmetric_extension + multi-scale). The
-              `lit_aczel_via_replication` axiom is now the theorem
-              `aczel_via_replication`, proved from `emergent_CES` + the
-              replication sum identity via a Fintype equivalence.
+    Phase 1:  2 custom lit_ axioms (weighted_aczel + multi_scale).
+    Phase 2:  3 custom lit_ axioms (symmetric_extension + aczel_via_replication
+              + multi_scale).
+    Phase 3a: 2 custom lit_ axioms (symmetric_extension + multi_scale).
+              `aczel_via_replication` becomes a proved theorem.
+    Phase 3b: 1 custom lit_ axiom (multi_scale only).
+              `lit_symmetric_extension` becomes the `HasSymExtension`
+              hypothesis, pushed to callers. F-hypotheses (cont/mono/hom)
+              become redundant (implied by `HasSymExtension`) and are
+              dropped from theorem signatures.
 
   NEW PROVED CONTENT (reusable lemmas / theorems):
     * `sum_replicate_sigma` — combinatorial sum-invariance.
     * `levelCount` + `levelCount_eq_iff` — level-set-rank construction.
-    * `aczel_via_replication` — arity-transport bridge (theorem, Phase 3a).
-    * `weighted_aczel_rational` — rational-weight case (theorem).
-    * `weighted_aczel_real` — real-weight case (theorem).
+    * `aczel_via_replication` — arity-transport bridge (Phase 3a).
+    * `HasSymExtension` — hypothesis structure (Phase 3b).
+    * `weighted_aczel_rational` — rational-weight case.
+    * `weighted_aczel_real` — real-weight case.
 -/
 
 import CESProofs.Foundations.Defs
@@ -93,48 +116,80 @@ theorem sum_replicate_rpow {J : ℕ} (p : Fin J → ℕ) (x : Fin J → ℝ) (ρ
   exact this
 
 -- ============================================================
--- Section 2: The symmetric extension axiom (NARROWED from lit_weighted_aczel)
+-- Section 2: The `HasSymExtension` hypothesis structure (Phase 3b)
 -- ============================================================
 
-/-- **Symmetric extension axiom.**
-    Given a weighted-symmetric aggregator `F : (Fin J → ℝ) → ℝ` satisfying
-    the classical Aczel regularity conditions and weighted symmetry under
-    a rational multiplicity profile `p : Fin J → ℕ`, there exists an
-    `N`-ary fully symmetric aggregator `Ftilde : ((j : Fin J) × Fin (p j) → ℝ)
-    → ℝ` that equals `F` on fiber-constant inputs.
+/-- **Symmetric-extension hypothesis** (Phase 3b).
+    Bundles the data + properties of a fully-symmetric N-ary aggregator
+    `Ftilde` on the Σ-type `(j : Fin J) × Fin (p j)` that extends `F` on
+    fiber-constant inputs.
 
-    This axiom is the *construction step* in the classical replication
-    argument (Aczél-Dhombres 1989, Ch. 15). It is strictly narrower than
-    `lit_weighted_aczel`: it only asserts existence of the extension,
-    not the power-mean conclusion.
+    This structure replaces the Phase 2 axiom `lit_symmetric_extension`.
+    It is axiom-free as a structure definition; the axiomatic content
+    moves to the application site, where callers must supply an instance.
 
-    Once the extension exists, classical `lit_aczel` applied to `Ftilde`
-    forces the power-mean form; the bridging identity translates this
-    back to a weighted power mean on `F`. -/
-axiom lit_symmetric_extension {J : ℕ} (F : AggFun J)
-    (p : Fin J → ℕ) (_hp_pos : ∀ (j : Fin J), 0 < p j)
-    (_hcont : IsContinuousAgg J F)
-    (_hincr : IsStrictlyIncreasing J F)
-    (_hhom : IsHomogDegOne J F)
-    (_hsc : IsScaleConsistent J F)
-    (_hsym : ∀ (σ : Equiv.Perm (Fin J)),
-               (∀ (j : Fin J), p (σ j) = p j) →
-               ∀ (x : Fin J → ℝ), F (x ∘ σ.symm) = F x) :
-    ∃ (Ftilde : ((j : Fin J) × Fin (p j) → ℝ) → ℝ),
-      -- Ftilde is a symmetric aggregator on the replicated index type
-      (∀ (σ : Equiv.Perm ((j : Fin J) × Fin (p j))) (y : (j : Fin J) × Fin (p j) → ℝ),
-         Ftilde (y ∘ σ) = Ftilde y) ∧
-      -- Ftilde is homogeneous of degree one
-      (∀ (c : ℝ) (_hc : 0 < c) (y : (j : Fin J) × Fin (p j) → ℝ),
-         Ftilde (fun ij => c * y ij) = c * Ftilde y) ∧
-      -- Ftilde is continuous
-      (Continuous Ftilde) ∧
-      -- Ftilde is strictly increasing (in each coordinate)
-      (∀ (y z : (j : Fin J) × Fin (p j) → ℝ),
-         (∀ ij, y ij ≤ z ij) → (∃ ij, y ij < z ij) → Ftilde y < Ftilde z) ∧
-      -- Ftilde agrees with F on fiber-constant inputs
-      (∀ (x : Fin J → ℝ),
-         Ftilde (fun ij => x ij.1) = F x)
+    **Why this is a refactor, not a construction:** The classical derivation
+    of `Ftilde` from `F` (Aczél-Dhombres 1989, Ch. 15) requires an arity-
+    indexed `AggFamily` with real scale consistency across arities
+    (Discovery D6). Our `IsScaleConsistent` is a single-arity placeholder,
+    providing insufficient structure to construct `Ftilde` from `F` directly.
+    A future D6 refactor would derive `HasSymExtension F p` from membership
+    in an `AggFamily`, eliminating the axiomatic content at the root.
+
+    **Why the refactor is still a gain:** it removes the `axiom` keyword
+    from this file and simplifies downstream theorem signatures. The
+    hypotheses `F` is continuous / monotone / homogeneous / weighted-
+    symmetric are now IMPLIED by `HasSymExtension F p` (see
+    `HasSymExtension.F_continuous`, etc. below), so they no longer need
+    to appear explicitly in theorem statements. -/
+structure HasSymExtension {J : ℕ} (F : AggFun J) (p : Fin J → ℕ) where
+  /-- The fully-symmetric N-ary aggregator on the Σ-type. -/
+  Ftilde : ((j : Fin J) × Fin (p j) → ℝ) → ℝ
+  /-- Ftilde is invariant under all permutations of the Σ-type. -/
+  sym : ∀ (σ : Equiv.Perm ((j : Fin J) × Fin (p j)))
+          (y : (j : Fin J) × Fin (p j) → ℝ), Ftilde (y ∘ σ) = Ftilde y
+  /-- Ftilde is homogeneous of degree one. -/
+  hom : ∀ (c : ℝ), 0 < c → ∀ (y : (j : Fin J) × Fin (p j) → ℝ),
+          Ftilde (fun ij => c * y ij) = c * Ftilde y
+  /-- Ftilde is continuous. -/
+  cont : Continuous Ftilde
+  /-- Ftilde is strictly increasing in each coordinate. -/
+  incr : ∀ (y z : (j : Fin J) × Fin (p j) → ℝ),
+           (∀ ij, y ij ≤ z ij) → (∃ ij, y ij < z ij) → Ftilde y < Ftilde z
+  /-- Ftilde agrees with F on fiber-constant inputs. -/
+  eq_fill : ∀ (x : Fin J → ℝ), Ftilde (fun ij => x ij.1) = F x
+
+namespace HasSymExtension
+variable {J : ℕ} {F : AggFun J} {p : Fin J → ℕ}
+
+/-- F is continuous whenever `HasSymExtension F p` holds.
+    Precomposition with `ij ↦ ij.1` is continuous, `Ftilde` is continuous,
+    so `F = Ftilde ∘ fill` is continuous. -/
+theorem F_continuous (h : HasSymExtension F p) : IsContinuousAgg J F := by
+  change Continuous F
+  have heq : F = fun x : Fin J → ℝ => h.Ftilde (fun ij => x ij.1) := by
+    funext x; exact (h.eq_fill x).symm
+  rw [heq]
+  exact h.cont.comp (continuous_pi (fun ij => continuous_apply ij.1))
+
+/-- F is homogeneous of degree 1 whenever `HasSymExtension F p` holds. -/
+theorem F_homogeneous (h : HasSymExtension F p) : IsHomogDegOne J F := by
+  intro x c hc
+  rw [← h.eq_fill (fun j => c * x j), ← h.eq_fill x,
+      h.hom c hc (fun ij => x ij.1)]
+
+/-- F is strictly increasing whenever `HasSymExtension F p` holds and
+    every fiber is nonempty. -/
+theorem F_strictly_increasing (h : HasSymExtension F p)
+    (hp_pos : ∀ (j : Fin J), 0 < p j) : IsStrictlyIncreasing J F := by
+  intro x y hle hlt
+  obtain ⟨j₀, hj₀⟩ := hlt
+  rw [← h.eq_fill x, ← h.eq_fill y]
+  apply h.incr
+  · intro ij; exact hle ij.1
+  · exact ⟨⟨j₀, ⟨0, hp_pos j₀⟩⟩, hj₀⟩
+
+end HasSymExtension
 
 -- ============================================================
 -- Section 3: Bridge from Ftilde's classical-Aczel conclusion (PROVED, Phase 3a)
@@ -265,39 +320,31 @@ theorem aczel_via_replication {J : ℕ} (F : AggFun J)
     ring
 
 -- ============================================================
--- Section 4: Weighted Aczel for rational weights (PROVED)
+-- Section 4: Weighted Aczel for rational weights (PROVED, Phase 3b)
 -- ============================================================
 
 /-- **Weighted Aczel — rational-weight case.**
     For rational weights `p j / N` (represented as integer multiplicities
-    `p : Fin J → ℕ`), a weighted-symmetric aggregator satisfying the
-    classical Aczel regularity is a weighted power mean with weights
-    compatible with the multiplicity profile.
+    `p : Fin J → ℕ`), a function `F` admitting a `HasSymExtension` is a
+    weighted power mean with weights compatible with the multiplicity
+    profile.
 
-    Proof:
-      1. Use `lit_symmetric_extension` to construct a symmetric N-ary
-         extension `Ftilde` of `F` (where `N` is indexed by the Σ-type)
-         together with its regularity properties.
-      2. Apply `aczel_via_replication` (PROVED in Section 3 above) to
-         discharge the arity-transport + classical Aczél combination. -/
+    Phase 3b note: this theorem's former hypotheses (continuity, strict
+    monotonicity, homogeneity, scale consistency, weighted symmetry of F)
+    were only needed inside the old `lit_symmetric_extension` axiom to
+    construct `Ftilde`. With `HasSymExtension F p` supplied directly,
+    F's own regularity is redundant (implied by `HasSymExtension`; see
+    `HasSymExtension.F_continuous`, `F_homogeneous`, `F_strictly_increasing`).
+
+    Proof: apply `aczel_via_replication` (PROVED in Section 3) with the
+    `Ftilde` supplied by the `HasSymExtension` instance. -/
 theorem weighted_aczel_rational {J : ℕ} (F : AggFun J)
-    (p : Fin J → ℕ) (hp_pos : ∀ (j : Fin J), 0 < p j)
-    (hcont : IsContinuousAgg J F)
-    (hincr : IsStrictlyIncreasing J F)
-    (hhom : IsHomogDegOne J F)
-    (hsc : IsScaleConsistent J F)
-    (hsym : ∀ (σ : Equiv.Perm (Fin J)),
-              (∀ (j : Fin J), p (σ j) = p j) →
-              ∀ (x : Fin J → ℝ), F (x ∘ σ.symm) = F x) :
+    (p : Fin J → ℕ) (h_ext : HasSymExtension F p) :
     ∃ (ρ : ℝ) (_hρ : ρ ≠ 0) (a : Fin J → ℝ),
       (∀ (j k : Fin J), p j = p k → a j = a k) ∧
-      (∀ (x : Fin J → ℝ), F x = (∑ j, a j * (x j) ^ ρ) ^ (1 / ρ)) := by
-  -- Step 1: obtain the symmetric extension via the remaining axiom.
-  obtain ⟨Ftilde, hFtilde_sym, hFtilde_hom, hFtilde_cont, hFtilde_incr, hFtilde_eq⟩ :=
-    lit_symmetric_extension F p hp_pos hcont hincr hhom hsc hsym
-  -- Step 2: apply the proved arity-transport bridge.
-  exact aczel_via_replication F p Ftilde
-    hFtilde_sym hFtilde_hom hFtilde_cont hFtilde_incr hFtilde_eq
+      (∀ (x : Fin J → ℝ), F x = (∑ j, a j * (x j) ^ ρ) ^ (1 / ρ)) :=
+  aczel_via_replication F p h_ext.Ftilde
+    h_ext.sym h_ext.hom h_ext.cont h_ext.incr h_ext.eq_fill
 
 -- ============================================================
 -- Section 4: Weighted Aczel for real weights (PROVED via level-set-rank trick)
@@ -365,40 +412,20 @@ lemma levelCount_eq_iff {J : ℕ} (w : Fin J → ℝ) (j k : Fin J) :
 
 /-- **Weighted Aczel — general real-weight case.** Proved from
     `weighted_aczel_rational` by constructing an integer multiplicity profile
-    `p` whose level-set structure matches `w`'s. Since the conclusion of
-    `weighted_aczel_rational` only references `p` through the level-set
-    compatibility of the weight function `a`, and the level-set structures
-    agree, the conclusion translates directly to real weights.
+    `p := levelCount w` whose level-set structure matches `w`'s.
 
-    NOTE: no continuity/approximation argument is needed. The level-set-rank
-    trick circumvents the usual density-of-rationals machinery. -/
+    Phase 3b: the caller supplies `HasSymExtension F (levelCount w)` rather
+    than F's individual regularity hypotheses. The `levelCount` construction
+    eliminates the usual rational-to-real continuity closure. -/
 theorem weighted_aczel_real {J : ℕ} (F : AggFun J) (w : Fin J → ℝ)
-    (_hw_nn : ∀ (j : Fin J), 0 ≤ w j)
-    (hcont : IsContinuousAgg J F)
-    (hincr : IsStrictlyIncreasing J F)
-    (hhom : IsHomogDegOne J F)
-    (hsc : IsScaleConsistent J F)
-    (hsym : ∀ (σ : Equiv.Perm (Fin J)),
-              (∀ (j : Fin J), w (σ j) = w j) →
-              ∀ (x : Fin J → ℝ), F (x ∘ σ.symm) = F x) :
+    (h_ext : HasSymExtension F (levelCount w)) :
     ∃ (ρ : ℝ) (_hρ : ρ ≠ 0) (a : Fin J → ℝ),
       (∀ (j k : Fin J), w j = w k → a j = a k) ∧
       (∀ (x : Fin J → ℝ), F x = (∑ j, a j * (x j) ^ ρ) ^ (1 / ρ)) := by
-  -- Build a multiplicity profile with the same level-set structure as w.
-  let p : Fin J → ℕ := levelCount w
-  have hp_pos : ∀ (j : Fin J), 0 < p j := fun j => levelCount_pos w j
-  -- w-symmetry implies p-symmetry (p σj = p j follows from w σj = w j).
-  have hsym_p : ∀ (σ : Equiv.Perm (Fin J)),
-                  (∀ (j : Fin J), p (σ j) = p j) →
-                  ∀ (x : Fin J → ℝ), F (x ∘ σ.symm) = F x := by
-    intro σ hσ x
-    apply hsym
-    intro j
-    exact (levelCount_eq_iff w (σ j) j).mp (hσ j)
-  -- Apply the rational case.
+  -- Apply the rational case with p := levelCount w.
   obtain ⟨ρ, hρ, a, ha_compat_p, ha_form⟩ :=
-    weighted_aczel_rational F p hp_pos hcont hincr hhom hsc hsym_p
-  -- Translate p-compatibility to w-compatibility.
+    weighted_aczel_rational F (levelCount w) h_ext
+  -- Translate p-compatibility to w-compatibility via levelCount_eq_iff.
   refine ⟨ρ, hρ, a, ?_, ha_form⟩
   intro j k hwjk
   exact ha_compat_p j k ((levelCount_eq_iff w j k).mpr hwjk)
