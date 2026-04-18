@@ -279,7 +279,15 @@ theorem equilibriumShare_is_shareFunction
 
     This is not an analogy. It is a theorem: the observable
     cost shares from national accounts data ARE the natural
-    weights in q-deformed statistical mechanics. -/
+    weights in q-deformed statistical mechanics.
+
+    The **q = ρ locking** — that q and ρ are *forced* to the same
+    number, not merely parametric labels — is
+    `q_equals_rho_locking` / `q_equals_rho_from_factor_share` in
+    `Applications/Economics.lean`. Given that the escort
+    distributions (resp. factor shares) at the two different
+    parameters agree on all positive input profiles, ρ = q. The
+    proof uses zero custom axioms. -/
 theorem factorShare_escort_identity (ρ : ℝ)
     (x : Fin J → ℝ) (j : Fin J) :
     factorShare J (fun _ => (1 : ℝ)) ρ x j =

@@ -195,6 +195,109 @@ theorem factorShare_eq_escort {J : ℕ} (ρ : ℝ) (x : Fin J → ℝ) (j : Fin 
     factorShare J (fun _ => (1 : ℝ)) ρ x j = escortDistribution J ρ x j := by
   simp [factorShare, escortDistribution]
 
+/-- **q = ρ locking (escort form).**
+
+    If the Tsallis escort distribution at order `q` agrees, for all
+    positive input profiles, with the escort distribution at order `ρ`,
+    then `q = ρ`.
+
+    Combined with `factorShare_eq_escort` (which identifies CES factor
+    shares with Tsallis escorts at matching parameters), this promotes
+    the informal "q = ρ locking" asserted in the research notes from a
+    comment-level observation to a proved theorem: the CES exponent
+    (Aczél-side uniqueness) and the Tsallis order (Chentsov / entropy-
+    side uniqueness) cannot be assigned different values consistent
+    with a common distribution. They are locked together.
+
+    **Proof.** Apply the hypothesis at `x := (2, 1, 1, …, 1)` at two
+    indices: position 0 (value 2) and position 1 (value 1). The position-1
+    equation forces `Z_ρ = Z_q` (both denominators equal), and the
+    position-0 equation then forces `2^ρ = 2^q`, from which `ρ = q` by
+    injectivity of `(fun t => 2^t)`.
+
+    **Scope.** The hypothesis `h_link` is the "link" condition discussed
+    in the D6 / q=ρ locking prompt: the escort-distribution agreement
+    across all positive x. It is the minimal structural hypothesis under
+    which the locking becomes theorem-level. Weakening `h_link` further
+    (e.g., agreement at a single x) would not suffice; strengthening via
+    Chentsov-side or Tsallis-side uniqueness would recover the classical
+    "forced by joint uniqueness" narrative. -/
+theorem q_equals_rho_locking {J : ℕ} (hJ : 2 ≤ J) {ρ q : ℝ}
+    (h_link : ∀ (x : Fin J → ℝ), (∀ j, 0 < x j) →
+              ∀ j : Fin J,
+                escortDistribution J ρ x j = escortDistribution J q x j) :
+    ρ = q := by
+  have hJpos : 0 < J := by omega
+  have h1J : 1 < J := by omega
+  let i0 : Fin J := ⟨0, hJpos⟩
+  let i1 : Fin J := ⟨1, h1J⟩
+  have h_i1_ne : i1 ≠ i0 := by
+    intro h
+    have : (1 : ℕ) = 0 := Fin.val_eq_of_eq h
+    omega
+  -- Witness input profile: (2, 1, 1, …, 1).
+  let x : Fin J → ℝ := fun k => if k = i0 then 2 else 1
+  have hx_pos : ∀ j, 0 < x j := by
+    intro j
+    simp only [x]
+    split_ifs <;> norm_num
+  have hx_i0 : x i0 = 2 := by simp [x]
+  have hx_i1 : x i1 = 1 := by simp [x, h_i1_ne]
+  -- Apply the linking hypothesis at the two positions.
+  have h0 := h_link x hx_pos i0
+  have h1 := h_link x hx_pos i1
+  simp only [escortDistribution, hx_i0, hx_i1, Real.one_rpow] at h0 h1
+  -- h0 :  2 ^ ρ / ∑ (x k)^ρ  =  2 ^ q / ∑ (x k)^q
+  -- h1 :  1 / ∑ (x k)^ρ     =  1 / ∑ (x k)^q
+  set Zρ : ℝ := ∑ k : Fin J, (x k) ^ ρ with hZρdef
+  set Zq : ℝ := ∑ k : Fin J, (x k) ^ q with hZqdef
+  have hZρ_pos : 0 < Zρ :=
+    Finset.sum_pos (fun k _ => Real.rpow_pos_of_pos (hx_pos k) ρ)
+      ⟨i0, Finset.mem_univ _⟩
+  have hZq_pos : 0 < Zq :=
+    Finset.sum_pos (fun k _ => Real.rpow_pos_of_pos (hx_pos k) q)
+      ⟨i0, Finset.mem_univ _⟩
+  -- From h1 (values are 1 on both sides numerator): the denominators agree.
+  have hZ_eq : Zρ = Zq := by
+    have := h1
+    -- this : 1 / Zρ = 1 / Zq
+    field_simp at this
+    linarith
+  -- From h0 with Zρ = Zq: 2^ρ / Zq = 2^q / Zq, hence 2^ρ = 2^q.
+  have h2ρ_eq : (2 : ℝ) ^ ρ = (2 : ℝ) ^ q := by
+    have h0' := h0
+    rw [hZ_eq] at h0'
+    -- h0' : 2^ρ / Zq = 2^q / Zq
+    exact (div_left_inj' (ne_of_gt hZq_pos)).mp h0'
+  -- Injectivity of (fun t => 2^t) for base 2 > 1 extracts ρ = q.
+  have h2pos : (0 : ℝ) < 2 := by norm_num
+  have hlog2_ne : Real.log 2 ≠ 0 := by
+    have : (2 : ℝ) ≠ 1 := by norm_num
+    exact Real.log_ne_zero_of_pos_of_ne_one h2pos this
+  have : ρ * Real.log 2 = q * Real.log 2 := by
+    have hlρ : Real.log ((2 : ℝ) ^ ρ) = ρ * Real.log 2 := Real.log_rpow h2pos ρ
+    have hlq : Real.log ((2 : ℝ) ^ q) = q * Real.log 2 := Real.log_rpow h2pos q
+    rw [← hlρ, ← hlq, h2ρ_eq]
+  exact mul_right_cancel₀ hlog2_ne this
+
+/-- **q = ρ locking (factor-share form).**
+
+    If CES factor shares at exponent `ρ` (with unit weights) agree with
+    the Tsallis escort distribution at order `q` for all positive input
+    profiles, then `ρ = q`.
+
+    Direct corollary of `q_equals_rho_locking` via `factorShare_eq_escort`. -/
+theorem q_equals_rho_from_factor_share {J : ℕ} (hJ : 2 ≤ J) {ρ q : ℝ}
+    (h_link : ∀ (x : Fin J → ℝ), (∀ j, 0 < x j) →
+              ∀ j : Fin J,
+                factorShare J (fun _ => (1 : ℝ)) ρ x j =
+                escortDistribution J q x j) :
+    ρ = q := by
+  apply q_equals_rho_locking hJ
+  intro x hx_pos j
+  rw [← factorShare_eq_escort ρ x j]
+  exact h_link x hx_pos j
+
 /-- At the symmetric allocation (x_j = c for all j), the escort distribution
     is uniform: P_j^(ρ)(c, …, c) = 1/J, independent of ρ and c > 0.
 

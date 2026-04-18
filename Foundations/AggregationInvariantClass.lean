@@ -53,15 +53,22 @@ theorem non_ces_decays_relative_to_rho {k : ℕ} (_hk : 2 ≤ k) {m : ℕ} (_hm 
   rw [abs_of_nonneg (pow_nonneg (modeRate_pos (by omega : 1 ≤ k) m).le L)]
   ring
 
-/-- ρ is locked to Rényi entropy of matching order (q = ρ).
+/-- ρ is locked to Rényi/Tsallis entropy order of matching order (q = ρ).
 
-    The aggregation-invariant class label ρ equals the Rényi entropy
-    order q: the CES aggregate M_ρ is self-consistent with H_q iff q = ρ.
+    The aggregation-invariant class label ρ equals the entropic order q:
+    the CES aggregate M_ρ is self-consistent with the q-escort iff q = ρ.
 
     This connects the aggregation-invariant class label to information theory.
-    The supporting evidence is the collision entropy bound: among all
+    The supporting evidence here is the collision entropy bound: among all
     probability distributions, the uniform distribution minimizes Σ p_j²
     (= maximizes H₂), which is the self-consistency condition for M₂.
+
+    The **full locking theorem** (promoted from comment-level to
+    theorem-level) is `q_equals_rho_locking` in
+    `Applications/Economics.lean`: if Tsallis escorts at order q agree
+    with escorts at order ρ across all positive input profiles, then
+    q = ρ. The proof requires zero custom axioms — the locking is
+    forced purely by the minimal structural hypothesis.
 
     Source: Paper 1, Theorem 4.1 and Proposition 5.1. -/
 theorem rho_renyi_correspondence_support {J : ℕ} (hJ : 0 < J)
