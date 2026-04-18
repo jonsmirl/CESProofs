@@ -16,13 +16,17 @@ if unproductive. Nothing outside this directory imports from it.
 ```
 LogZExperiment/
 ├── README.md        — this file
-├── Master.lean      — aggregator; imports all 5 layers
+├── Master.lean      — pre-fork aggregator; imports Layers 0-4
 ├── Layer0.lean      — the master generator (logZ + basic properties)
 ├── Layer1.lean      — six derivatives (escort, Fisher, curvature,
 │                     bridge, Legendre, Bregman)
 ├── Layer2.lean      — domain regularity (Aczél vs Chentsov predicates)
 ├── Layer3.lean      — doubly-unique theorem (both axiom packs)
-└── Layer4.lean      — consistency identities (bridge, VRI, Pythagorean)
+├── Layer4.lean      — consistency identities (bridge, VRI, Pythagorean)
+├── Aczel.lean       — Layer 5 Aczél fork: factorShare, cesAggregator,
+│                     economicCurvature, costFunction
+└── Chentsov.lean    — Layer 5 Chentsov fork: escortProbability,
+                      fisherRaoRho, sufficientStat, klDivergence
 ```
 
 ## Architecture: five pre-fork tradition-neutral layers
@@ -75,13 +79,31 @@ Layer 7: Input-type fork                            DEEP FORK
          (multi-step translation, not direct specialization)
 ```
 
-## Current status (Phase 1, Oct 2026)
+## Current status (Oct 2026)
 
 **Pre-fork architecture (Layers 0-4): COMPLETE**
 
 - 22 core theorems across 5 layer files.
 - All with zero custom axioms (`[propext, Classical.choice, Quot.sound]` only).
 - Full `lake build CESProofs.LogZExperiment.Master` passes.
+
+**Layer 5 (first hard fork): COMPLETE**
+
+- `Aczel.lean` (~170 lines): 4 Aczél-side named objects
+  (`factorShare`, `cesAggregator`, `economicCurvature`,
+  `costFunction`) + `arrowPratt` docstring anchor + 4 characteristic
+  theorems (including the Hölder-conjugate-exponent identity
+  `1/ρ + 1/r = 1`).
+- `Chentsov.lean` (~180 lines): 4 Chentsov-side named objects
+  (`escortProbability`, `fisherRaoRho`, `sufficientStat`,
+  `klDivergence`) + `naturalParameter` docstring anchor + 4
+  characteristic theorems (including `fisherRaoRho_nonneg` via
+  `escort_variance_nonneg`).
+- 8 Layer 5 theorems total; all zero custom axioms.
+- Equivalence theorems (`factorShare_is_escort`,
+  `escortProbability_is_escort`, `sufficientStat_is_log`) prove
+  by `rfl` — confirming the two Layer 5 forks refer to the
+  same underlying objects with only the names differing.
 
 Canary findings:
 - **The architecture is ergonomic.** Existing CESProofs code is
@@ -102,21 +124,29 @@ Canary findings:
 
 ## Future phases (post-fork)
 
-**Phase 2** — `LogZExperiment/Aczel.lean`: re-express existing
-CES content (production, welfare, macro, hierarchy) as Aczél-
-reading specializations of the Master layer. Mostly naming /
-re-exposure; existing CES theorems remain canonical.
+**Phase 2 (Layer 5, Aczél side): DONE** — `Aczel.lean` shipped.
 
-**Phase 3** — `LogZExperiment/Chentsov.lean`: native Chentsov
-statistical content — Fisher-Rao uniqueness (hypothesis-bundled),
-exponential families, sufficient statistics, Cramér-Rao bound
-(formula-identity form).
+**Phase 3 (Layer 5, Chentsov side): DONE** — `Chentsov.lean` shipped.
 
-**Phase 4** — `LogZExperiment/SocialChoice.lean`: input-type
-fork to preference orderings; Debreu representation; Arrow
+**Phase 4 (Layer 6): theorem cascades per tradition.** Heavy
+downstream content — on the Aczél side, production duality
+(Shephard's lemma, cost-function Legendre-conjugate theorems,
+the Sextuple Role connecting curvatureK to six specialized
+production properties), hierarchical CES, macroeconomic
+multiplier theory. On the Chentsov side, full exponential-family
+theory, Cramér-Rao bound as hypothesis-bundled statement,
+matrix-valued Fisher-Rao metric, geodesic distance computation,
+Chentsov's invariance theorem (monotonicity under Markov kernels,
+hypothesis-bundled).
+
+**Phase 5 (Layer 7): `SocialChoice.lean`.** Input-type fork
+to preference orderings; Debreu representation (preferences →
+utility function → real-valued inputs → logZ); Arrow
 impossibility (hypothesis-bundled); Condorcet convergence
-(bundled). Requires novel preference-framework infrastructure
-that doesn't yet exist in any form in CESProofs.
+(bundled via log-likelihood tail bounds). Requires novel
+preference-framework infrastructure that doesn't yet exist
+in any form in CESProofs; this is where the Aczél/Chentsov
+unification claim becomes thesis-novel.
 
 ## Deletion protocol
 
