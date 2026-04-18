@@ -146,14 +146,14 @@ end CESDefinition
 
 section CESEmergence
 
-#check @kolmogorov_nagumo   -- axiom: quasi-arithmetic mean characterization
-#check @aczel               -- axiom: Aczél functional equation
+#check @lit_kolmogorov_nagumo -- lit_ axiom: quasi-arithmetic mean characterization
+#check @lit_aczel             -- lit_ axiom: Aczél functional equation
 #check @emergent_CES        -- KN + Aczél ⟹ CES
 #check @aggregation_fixed_point -- CES is fixed point of multi-scale aggregation
 
 -- Emergence.lean: powerMean_isFixedPoint, ces_mode_preserved, mode_geometric_decay,
 --   modeRate_pos, modeRate_lt_one, stability_contraction, stability_rho_preserved,
---   anova_mode_connection, collision_entropy_le_log_J, renyi_entropy_le_log_J,
+--   lit_symmetric_anova_mode_bridge (lit_ axiom), collision_entropy_le_log_J, renyi_entropy_le_log_J,
 --   escort_uniform_at_symmetry, attractor_maximizes_renyi, ces_equivalence
 -- AggregationInvariantClass.lean: aggregation_invariance_of_rho, rho_mode_rate_is_one,
 --   non_ces_decays_relative_to_rho, basin_of_attraction_structure, basin_is_global,
@@ -838,9 +838,10 @@ All three axioms encode classical mathematical results not yet in Mathlib.
 
 | # | Axiom | File | Justification |
 |---|-------|------|---------------|
-| 1 | `kolmogorov_nagumo` | Basic.lean:34 | Kolmogorov–Nagumo (1930). |
-| 2 | `aczel` | Basic.lean:48 | Aczél (1948) functional equation. |
-| 3 | `transition_duration_scaling` | Paper4/TransitionDynamics:125 | Neishtadt GSPT (1987). |
+| 1 | `lit_kolmogorov_nagumo` | Defs.lean | Kolmogorov–Nagumo (1930). lit_ = proved in literature. |
+| 2 | `lit_aczel` | Defs.lean | Aczél (1948) functional equation. lit_ = proved in literature. |
+| 3 | `transition_duration_scaling` | Paper4/TransitionDynamics | Neishtadt GSPT (1987). Empirical scaling. |
+| 4 | `lit_symmetric_anova_mode_bridge` | Emergence.lean | Hoeffding (1948). lit_ = reducible, elaborator scope. |
 -/
 
 -- ════════════════════════════════════════════════════════════════

@@ -792,11 +792,19 @@ theorem cross_externality_positive {aB aS ρ : ℝ}
 
 /-- **Below-cost pricing**: When complementarity is strong enough,
     the platform optimally subsidizes at least one side.
+    [Schematic — source: Rochet-Tirole 2003, *RAND J. Econ.* 34:990,
+    Proposition 2 (optimal two-sided pricing); Armstrong 2006,
+    *RAND J. Econ.* 37:668 (competitive bottlenecks).
+    Our contribution: connecting the CES complementarity parameter rho
+    to the cross-group externality that drives the subsidy.]
 
     Axiomatized because the full proof requires solving the platform's
     profit maximization problem with two-sided demand functions.
 
-    **Proof.** For $\rho < 0$, the cross-group externality $\partial^2 V/\partial n_B \partial n_S > 0$ (NC cross-externality result) exceeds the marginal cost of serving one side. The platform's first-order condition then implies a negative optimal price (subsidy) for the side with smaller elasticity, as the induced participation on the other side generates surplus exceeding the subsidy cost. -/
+    **Proof sketch.** For $\rho < 0$, the cross-group externality
+    $\partial^2 V/\partial n_B \partial n_S > 0$ (proved: cross_externality_positive)
+    exceeds marginal cost. The platform's FOC then implies a negative
+    optimal price for the less-elastic side (Rochet-Tirole 2003). -/
 theorem below_cost_pricing (aB aS ρ : ℝ)
     (haB : 0 < aB) (haS : 0 < aS)
     (hρ : ρ < 0) :
@@ -804,11 +812,14 @@ theorem below_cost_pricing (aB aS ρ : ℝ)
     -- the effective cost for at least one side is negative.
     True := trivial
 
-/-- **Anti-network reversal**: For ρ < 0, cross-externalities saturate,
+/-- **Anti-network reversal**: For rho < 0, cross-externalities saturate,
     so the subsidy logic eventually reverses. This distinguishes CES
-    platform economics from the standard (ρ → 1) network effects model.
+    platform economics from the standard (rho -> 1) network effects model.
+    [Schematic — our own corollary of cross_externality_positive and
+    the CES cross-partial structure. Not a standard platform-economics
+    result; this is new to the CES framework.]
 
-    **Proof.** The cross-partial $\partial^2 V/\partial n_B \partial n_S \propto n_B^{\rho-1} n_S^{\rho-1}$ decays as participation grows (since $\rho - 1 < -1$ for $\rho < 0$). Beyond a threshold participation level, the marginal cross-externality falls below marginal cost, reversing the sign of the optimal subsidy from negative (subsidy) to positive (tax). -/
+    **Proof sketch.** The cross-partial $\partial^2 V/\partial n_B \partial n_S \propto n_B^{\rho-1} n_S^{\rho-1}$ decays as participation grows (since $\rho - 1 < -1$ for $\rho < 0$). Beyond a threshold, the marginal cross-externality falls below marginal cost, reversing the optimal subsidy. -/
 theorem anti_network_reversal (ρ : ℝ) (hρ : ρ < 0) :
     -- Cross-externalities saturate as participation grows;
     -- beyond a threshold, the platform should tax rather than subsidize.

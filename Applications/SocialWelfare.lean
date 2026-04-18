@@ -184,13 +184,21 @@ theorem rawlsian_limit :
 -- ============================================================
 
 /-- **Result SW-9 (Upstream Reform is Pareto Improving)**.
-    Reducing σ_{n-1} (upstream institutional friction) raises K_eff
+    [Schematic — internal consequence of Paper 4 upstream reform
+    principle, not an imported theorem. Sen 1973, *On Economic
+    Inequality*, provides the welfare-ordering motivation but not
+    the specific hierarchical result.]
+
+    Reducing sigma_{n-1} (upstream institutional friction) raises K_eff
     without changing the income distribution within level n.
     Under the CES SWF interpretation, this is Pareto improving:
     the welfare function rises for ALL levels of inequality aversion.
     Schematic: connects to Paper 4 hierarchical architecture.
 
-    **Proof.** The upstream reform principle (Paper 4) shows that reducing $\sigma_{n-1}$ raises $K_{\mathrm{eff},n}$ while leaving factor shares $s_j$ unchanged. Since the Atkinson SWF is increasing in $K_{\mathrm{eff}}$ for any $\varepsilon > 0$ (Sen 1973), the reform is Pareto improving across all inequality aversion levels. -/
+    **Proof sketch.** Paper 4 upstream reform principle: reducing
+    $\sigma_{n-1}$ raises $K_{\mathrm{eff},n}$ while leaving factor shares
+    $s_j$ unchanged. Since the Atkinson SWF is increasing in $K_{\mathrm{eff}}$
+    for any $\varepsilon > 0$, the reform is Pareto improving. -/
 theorem upstream_reform_pareto :
     -- Reducing σ_{n-1} raises K_eff_n without redistribution
     -- → Pareto improving under any ε > 0
@@ -201,13 +209,20 @@ theorem upstream_reform_pareto :
 -- ============================================================
 
 /-- **Result SW-10 (Damping Cancellation: No Distributional Conflict)**.
-    The welfare loss V_n is independent of own-level regulation σ_n
+    [Schematic — internal corollary of Paper 4 damping cancellation
+    theorem. Not externally grounded; this is the welfare interpretation
+    of the damping cancellation result.]
+
+    The welfare loss V_n is independent of own-level regulation sigma_n
     (damping cancellation, Paper 4). Under the Atkinson SWF, this
     means own-level regulation creates NO distributional conflict:
     all agents agree on the steady-state welfare.
-    Schematic: restates Paper 4 damping cancellation.
 
-    **Proof.** By the damping cancellation theorem (Paper 4), increasing $\sigma_n$ speeds convergence but lowers equilibrium output, with the two effects exactly cancelling in $V_n$. Under the Atkinson SWF, $V_n$ is the welfare-relevant loss, so all agents with any $\varepsilon > 0$ agree that own-level regulation is distributionally neutral. -/
+    **Proof sketch.** By damping cancellation (Paper 4), increasing
+    $\sigma_n$ speeds convergence but lowers equilibrium output, with
+    the two effects exactly cancelling in $V_n$. Under the Atkinson SWF,
+    all agents with any $\varepsilon > 0$ agree that own-level regulation
+    is distributionally neutral. -/
 theorem damping_no_distributional_conflict :
     -- V_n independent of σ_n → no winners or losers from own-level regulation
     True := trivial

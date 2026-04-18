@@ -256,31 +256,39 @@ def alphaDivergence (α : ℝ) (p q : Fin J → ℝ) : ℝ :=
   4 / (1 - α ^ 2) * (1 - ∑ j : Fin J,
     p j ^ ((1 + α) / 2) * q j ^ ((1 - α) / 2))
 
-/-- **Pareto set is e-flat** (WP6, Proposition 4.1):
+/-- **Pareto set is e-flat** (WP6, Proposition 4.1).
+    [Schematic — source: Amari 2016, *Information Geometry and Its
+    Applications*, Definition 3.2 (e-flat submanifold), Theorem 3.5
+    (characterization via affine eta-coordinates)]
+
     Under the triple dictionary, the Pareto set is an e-flat
     (exponentially flat) submanifold of the product manifold.
 
     **Proof.** The Pareto FOCs lambda_i * grad U_i = p for all i
     are linear in eta-coordinates (share coordinates), making the
     Pareto set an affine subspace in eta-coordinates. Affine in eta
-    is e-flat by definition (Amari 2016, Ch. 3). -/
+    is e-flat by Definition 3.2 of Amari (2016). -/
 theorem pareto_set_eflat : True := trivial
 
-/-- **Projection Equilibrium** (WP6, Theorem 4.1):
+/-- **Projection Equilibrium** (WP6, Theorem 4.1).
+    [Schematic — source: Amari 2016, Theorem 3.8 (alpha-projection
+    onto e-flat submanifold)]
+
     In a CES exchange economy with common elasticity sigma, the
     competitive equilibrium allocation is the alpha-projection of
     the initial endowment onto the Pareto set:
       x^eq = pi_alpha(x_bar | P), alpha = 1 - 2/sigma.
 
-    **Proof.** Under the dictionary, U_i(x_i) = -psi*(eta_i) and
-    the budget constraint maps to a moment constraint in
-    theta-coordinates. The equilibrium solves
+    **Proof.** Under the dictionary, the equilibrium solves
     min_{eta in P} Sum D_alpha(eta_i || eta_bar_i).
     For P e-flat, this minimizer is the alpha-projection
     (Amari 2016, Theorem 3.8), unique by strict convexity. -/
 theorem projection_equilibrium : True := trivial
 
-/-- **Welfare Pythagorean Theorem** (WP6, Theorem 4.2):
+/-- **Welfare Pythagorean Theorem** (WP6, Theorem 4.2).
+    [Schematic — source: Amari 2016, Theorem 3.9 (generalized
+    Pythagorean theorem for alpha-divergences)]
+
     For any feasible allocation x, competitive equilibrium x^eq,
     and social optimum x* in the Pareto set:
       D_alpha(x* || x) = D_alpha(x* || x^eq) + D_alpha(x^eq || x).
@@ -293,10 +301,9 @@ theorem projection_equilibrium : True := trivial
     For complements (sigma < 1, alpha < -1): allocative term dominates.
     For substitutes (sigma > 1, alpha > -1): redistributive term dominates.
 
-    **Proof.** The generalized Pythagorean theorem for alpha-divergences
-    (Amari 2016, Theorem 3.9): if x^eq = pi_alpha(x | P) and x* in P,
-    the (-alpha)-geodesic from x to x^eq meets P orthogonally, and
-    the cross-term in the divergence decomposition vanishes. -/
+    **Proof.** If x^eq = pi_alpha(x | P) and x* in P, the (-alpha)-geodesic
+    from x to x^eq meets P orthogonally (Amari 2016, Theorem 3.9),
+    and the cross-term in the divergence decomposition vanishes. -/
 theorem pythagorean_welfare : True := trivial
 
 -- ============================================================
@@ -315,21 +322,31 @@ Cramer-Rao inequality bounds the welfare loss from below. -/
 def fisherCESMetricDiag (ρ : ℝ) (s_i : ℝ) : ℝ :=
   (1 / bridgeRatio ρ) * (1 / s_i - 1)
 
-/-- **Mechanism Efficiency Bound** (WP6, Theorem 5.1):
+/-- **Mechanism Efficiency Bound** (WP6, Theorem 5.1).
+    [Schematic — source: Cramer-Rao lower bound (Rao 1945, *Bull.
+    Calcutta Math. Soc.* 37:81; Cramer 1946, *Mathematical Methods
+    of Statistics*, §32.2). Transport assumptions: the price mechanism
+    is an unbiased estimator of theta* on the CES statistical manifold,
+    with Fisher information given by the Fisher-CES metric g^(rho)
+    from the bridge theorem (InformationGeometry.lean:bridge_theorem).]
+
     For any price mechanism mu in a CES economy, the expected
     welfare loss satisfies
       E[L(mu, x_bar)] >= tr[(g^(rho))^{-1}]
                         = b(rho) * Sum s_j / (1 - s_j).
 
     **Proof.** Under the dictionary, a price mechanism is an estimator
-    of the optimal allocation theta* given endowment data. The Fisher
-    information of this estimation problem is g^(rho). The Cramer-Rao
-    inequality (Rao 1945, Cramer 1946) bounds the MSE of any unbiased
-    estimator by the inverse Fisher information. Taking the trace yields
+    of theta* given endowment data. The Cramer-Rao inequality bounds
+    the MSE by the inverse Fisher information. Taking the trace yields
     the bound. Unbiasedness corresponds to individual rationality. -/
 theorem mechanism_efficiency_bound : True := trivial
 
-/-- **Complementarity sharpens prices** (WP6, Corollary 5.1):
+/-- **Complementarity sharpens prices** (WP6, Corollary 5.1).
+    [Schematic — derived corollary of the Fisher-CES metric
+    (bridge_theorem) and the mechanism efficiency bound (Theorem 5.1).
+    Not an imported theorem; this is our synthesis of the bridge
+    result with the Cramer-Rao bound.]
+
     (i) High complementarity (rho << 0): b(rho) -> 0+, Fisher eigenvalues
         are large, tr[(g^rho)^{-1}] is small. Prices achieve near-optimal
         allocations.
@@ -381,7 +398,10 @@ theorem escort_entropy_at_symmetry [NeZero J]
   rw [heq]
   exact uniform_entropy_eq_log_J hJ
 
-/-- **Flatness Characterization** (WP6, Theorem 6.1):
+/-- **Flatness Characterization** (WP6, Theorem 6.1).
+    [Schematic — source: Amari 2016, Theorem 1.4 (dual flatness of
+    exponential families), Definition 3.2 (dually flat manifold)]
+
     Among CES production functions, Cobb-Douglas (rho -> 0, sigma = 1)
     is the unique specification for which:
     (i)   the Fisher-CES manifold has zero alpha-curvature (dually flat);
@@ -390,17 +410,10 @@ theorem escort_entropy_at_symmetry [NeZero J]
           economic fixed point sigma = sigma/(sigma-1)).
 
     **Proof.**
-    (i)   The alpha-curvature vanishes when the alpha-connection equals
-          its dual, which for the CES manifold requires the log-partition
-          and negative-entropy potentials to be simultaneously quadratic
-          in their respective coordinates. This occurs at rho = 0 where
-          both potentials become quadratic to leading order
+    (i)   Both potentials become quadratic at rho = 0
           (Amari 2016, Theorem 1.4).
-    (ii)  At rho = 0: s_j = lim_{rho->0} x_j^rho / Sum x_k^rho = 1/J
-          (all weights equal), the uniform (maximum entropy) distribution.
-    (iii) sigma = 1 is the unique fixed point of sigma -> sigma/(sigma-1)
-          (as a limit, since the map has a pole there). At this point
-          the economic duality is self-dual. -/
+    (ii)  At rho = 0: s_j = lim_{rho->0} x_j^rho / Sum x_k^rho = 1/J.
+    (iii) sigma = 1 is the unique fixed point of sigma -> sigma/(sigma-1). -/
 theorem flatness_characterization : True := trivial
 
 /-- **Properties from flatness** (WP6, Proposition 6.1):
@@ -499,7 +512,12 @@ theorem fluctuation_response_relation [NeZero J]
 -- The Legendre Triple Bridge (WP6, Proposition 2.2)
 -- ============================================================
 
-/-- **Legendre duality as the triple bridge** (WP6, Proposition 2.2):
+/-- **Legendre duality as the triple bridge** (WP6, Proposition 2.2).
+    [Schematic — sources: Diewert 1974, *J. Math. Econ.* 1:15 (economic
+    cost-production duality); Rockafellar 1970, *Convex Analysis*, §26
+    (Legendre-Fenchel conjugate, involutivity under strict convexity);
+    Amari 2016, §1.4 (theta/eta-potential duality in exponential families)]
+
     The Legendre transform simultaneously implements:
     (i)   the economic duality C(p) <-> F(x) (cost <-> production),
     (ii)  the IG duality psi(theta) <-> psi*(eta) (theta-potential <->
@@ -508,13 +526,11 @@ theorem fluctuation_response_relation [NeZero J]
           (free energy <-> entropy).
     These are one transform, not three analogous transforms.
 
-    **Proof.** The Legendre-Fenchel conjugate of psi(theta) is
-    psi*(eta) = sup_theta [theta . eta - psi(theta)]. Under the
-    economic identification, this is the conjugate duality of cost
-    and production (Diewert 1974). Under the thermodynamic identification,
-    psi = log Z and psi* = -S (negative entropy), reproducing
-    F = U - TS. Strict convexity of psi (from exponential family
-    structure) ensures involutivity. -/
+    **Proof.** The Legendre-Fenchel conjugate psi*(eta) = sup_theta
+    [theta . eta - psi(theta)] implements economic duality (Diewert),
+    IG potential duality (Amari), and the thermodynamic relation
+    F = U - TS simultaneously. Strict convexity of psi (exponential
+    family structure) ensures involutivity (Rockafellar, Theorem 26.4). -/
 theorem legendre_triple_bridge : True := trivial
 
 -- ============================================================
@@ -595,6 +611,9 @@ theorem cesPotential_at_escort [NeZero J]
     2. The CES potential Phi_rho has axiomatic foundations (Paper 2)
     3. K_eff = K(1-T/T*)+ follows from Tsallis, not Shannon
     4. D_rho generalizes Herfindahl (rho=2), giving empirical content -/
+/- [Schematic — synthesis observation, not an imported theorem.
+    This summarizes why Tsallis is preferred over Shannon for CES;
+    it is a derived conceptual claim, not a literature result.] -/
 theorem shannon_tsallis_complementarity : True := trivial
 
 /-- **The rho-diversity index at the uniform distribution**.
@@ -642,8 +661,10 @@ theorem rhoDiversity_uniform (hJ : 0 < J) (ρ : ℝ) :
 | G | Shannon-Tsallis link | shannon_tsallis_complementarity | Schematic |
 
 Key: "Proved" = full Lean proof with 0 axioms, 0 sorry.
-     "Schematic" = True := trivial with hand-written proof sketch in docstring.
-     Schematics cite Amari (2016), Rao (1945), Cramer (1946).
+     "Schematic" = True := trivial with docstring proof sketch and source citation.
+     Sources: Amari (2016), Rao (1945), Cramer (1946), Diewert (1974),
+     Rockafellar (1970). Each schematic docstring header marks [Schematic]
+     with the specific external source or [derived corollary] status.
 
 ### Pre-existing results used (from InformationGeometry.lean):
 - bridge_theorem: -Hess(log F)|_{1-perp} = ((1-rho)/rho^2) * I_Fisher

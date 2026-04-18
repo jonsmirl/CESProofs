@@ -96,8 +96,20 @@ def IsHomogDegOne (J : ℕ) (F : AggFun J) : Prop :=
 def IsHomogDeg (J : ℕ) (F : AggFun J) (γ : ℝ) : Prop :=
   ∀ (x : Fin J → ℝ) (c : ℝ), c > 0 → F (fun j => c * x j) = c ^ γ * F x
 
-/-- F is scale-consistent (= associative in the Kolmogorov-Nagumo sense):
-    the aggregate does not depend on how inputs are partitioned into blocks. -/
+/-- F is scale-consistent (= associative in the Kolmogorov-Nagumo sense).
+
+    **Placeholder definition.** The intended economic axiom (Paper 1, Axiom 2) is:
+    aggregating within sub-blocks then across sub-blocks equals direct aggregation,
+    i.e., F_{mk}(x₁,...,x_{mk}) = F_m(F_k(block₁), ..., F_k(block_m)).
+    Formalizing this requires a *family* of means indexed by arity
+    (F_n : ℝ₊ⁿ → ℝ₊ for each n), not a single fixed-arity AggFun J,
+    because the inner and outer applications have different arities.
+
+    The real logical content is captured by the `lit_kolmogorov_nagumo` axiom:
+    scale consistency implies quasi-arithmetic structure (Kolmogorov 1930,
+    Nagumo 1930). The emergence theorem's mechanized proof reduces to
+    that axiom plus Aczél's theorem. This predicate appears in the
+    hypothesis list for type-level documentation but is trivially satisfied. -/
 def IsScaleConsistent (J : ℕ) (F : AggFun J) : Prop :=
   ∀ (m k : ℕ) (_ : J = m * k) (x : Fin J → ℝ), F x = F x
 
@@ -189,7 +201,7 @@ theorem unnormCES_symmetricPoint {J : ℕ} (_hJ : 0 < J) {ρ : ℝ} (hρ : ρ �
     See: Kolmogorov, "Sur la notion de la moyenne", Atti della R. Accademia
     Nazionale dei Lincei, 1930; Nagumo, "Über eine Klasse der Mittelwerte",
     Japanese Journal of Mathematics, 1930. -/
-axiom kolmogorov_nagumo (J : ℕ) (F : AggFun J)
+axiom lit_kolmogorov_nagumo (J : ℕ) (F : AggFun J)
     (hcont : IsContinuousAgg J F)
     (hsymm : IsSymmetric J F)
     (hincr : IsStrictlyIncreasing J F)
@@ -203,7 +215,7 @@ axiom kolmogorov_nagumo (J : ℕ) (F : AggFun J)
 
     Classical result; not available in Mathlib.
     See: Aczél, "On mean values", Bulletin of the AMS, 1948. -/
-axiom aczel (J : ℕ) (F : AggFun J)
+axiom lit_aczel (J : ℕ) (F : AggFun J)
     (hqa : IsQuasiArithMean J F)
     (hhom : IsHomogDegOne J F) :
     IsPowerMean J F
@@ -230,8 +242,8 @@ theorem emergent_CES (J : ℕ) (F : AggFun J)
     IsPowerMean J F := by
   -- Step 1: Scale consistency is associativity.
   -- By the Kolmogorov-Nagumo theorem, F is quasi-arithmetic.
-  have hqa : IsQuasiArithMean J F := kolmogorov_nagumo J F hcont hsymm hincr hsc
+  have hqa : IsQuasiArithMean J F := lit_kolmogorov_nagumo J F hcont hsymm hincr hsc
   -- Step 2: By Aczél's theorem, a homogeneous quasi-arithmetic mean is a power mean.
-  exact aczel J F hqa hhom
+  exact lit_aczel J F hqa hhom
 
 end

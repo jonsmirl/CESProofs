@@ -170,13 +170,21 @@ theorem concentration_amplifies_exit {ρ H₁ H₂ δ : ℝ}
 -- ============================================================
 
 /-- **Result HF-9 (Cascade Exit Feedback)**.
-    Exit raises H → lowers K_eff → may trigger more exits:
+    [Schematic — internal corollary of HF-4 through HF-6.
+    Not an imported theorem; this is our own causal chain from the
+    proved Herfindahl-curvature results above.]
+
+    Exit raises H -> lowers K_eff -> may trigger more exits:
     a self-reinforcing cascade. When one firm's exit raises H
     enough to push another firm below the exit threshold,
     the cascade propagates.
     Schematic: requires ODE dynamics for the feedback loop.
 
-    **Proof.** By HF-4, exit raises the Herfindahl index $H$, which by HF-5 lowers $K_{\mathrm{eff}}$. Lower $K_{\mathrm{eff}}$ raises the effective exit threshold (Melitz 2003), potentially pushing additional firms below viability. The cascade terminates at a new equilibrium $H^*$ where no remaining firm is below threshold, or at $H = 1$ (monopoly). -/
+    **Proof sketch.** By HF-4, exit raises $H$. By HF-5, higher $H$
+    lowers $K_{\mathrm{eff}}$. Lower $K_{\mathrm{eff}}$ raises the effective exit
+    threshold, potentially pushing additional firms below viability.
+    The cascade terminates at $H^*$ (no remaining firm below threshold)
+    or at $H = 1$ (monopoly). -/
 theorem cascade_exit_feedback :
     -- Exit raises H → lowers K_eff → raises exit threshold → more exits
     True := trivial
@@ -186,13 +194,17 @@ theorem cascade_exit_feedback :
 -- ============================================================
 
 /-- **Result HF-10 (Melitz-CES Equivalence)**.
-    Under Pareto-distributed firm productivities φ ~ Pareto(φ_min, k),
-    the CES weight is aⱼ = φⱼ^{σ-1} / Σ φₖ^{σ-1} (Melitz-Chaney).
+    [Schematic — source: Melitz 2003, *Econometrica* 71:1695, Eq. 7;
+    Chaney 2008, *AER* 98:1707, Proposition 1 (closed-form aggregation
+    under Pareto productivity distribution)]
+
+    Under Pareto-distributed firm productivities phi ~ Pareto(phi_min, k),
+    the CES weight is a_j = phi_j^{sigma-1} / Sum phi_k^{sigma-1}.
     The CES aggregate with these weights is the Melitz (2003) industry
     aggregate. General-weight CES subsumes Melitz as a special case.
     Schematic: requires Pareto distribution theory.
 
-    **Proof.** In Melitz (2003), firm $j$ with productivity $\varphi_j$ produces $q_j = \varphi_j \ell_j$, and the industry aggregate is $Q = (\sum q_j^\rho)^{1/\rho}$. Setting $a_j = \varphi_j^{\sigma-1}/\sum_k \varphi_k^{\sigma-1}$ and $x_j = q_j/\varphi_j^{(\sigma-1)/\rho}$, the Melitz aggregate reduces to the general-weight CES $(\sum a_j x_j^\rho)^{1/\rho}$. -/
+    **Proof.** In Melitz (2003), firm $j$ with productivity $\varphi_j$ produces $q_j = \varphi_j \ell_j$, and the industry aggregate is $Q = (\sum q_j^\rho)^{1/\rho}$. Setting $a_j = \varphi_j^{\sigma-1}/\sum_k \varphi_k^{\sigma-1}$, the Melitz aggregate reduces to the general-weight CES $(\sum a_j x_j^\rho)^{1/\rho}$. Chaney (2008) provides the closed-form aggregation. -/
 theorem melitz_ces_equivalence :
     -- Melitz industry aggregate = CES with productivity weights
     True := trivial
