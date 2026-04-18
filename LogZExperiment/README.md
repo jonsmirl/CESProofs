@@ -15,18 +15,23 @@ if unproductive. Nothing outside this directory imports from it.
 
 ```
 LogZExperiment/
-├── README.md        — this file
-├── Master.lean      — pre-fork aggregator; imports Layers 0-4
-├── Layer0.lean      — the master generator (logZ + basic properties)
-├── Layer1.lean      — six derivatives (escort, Fisher, curvature,
-│                     bridge, Legendre, Bregman)
-├── Layer2.lean      — domain regularity (Aczél vs Chentsov predicates)
-├── Layer3.lean      — doubly-unique theorem (both axiom packs)
-├── Layer4.lean      — consistency identities (bridge, VRI, Pythagorean)
-├── Aczel.lean       — Layer 5 Aczél fork: factorShare, cesAggregator,
-│                     economicCurvature, costFunction
-└── Chentsov.lean    — Layer 5 Chentsov fork: escortProbability,
-                      fisherRaoRho, sufficientStat, klDivergence
+├── README.md                — this file
+├── Master.lean              — pre-fork aggregator; imports Layers 0-4
+├── Layer0.lean              — master generator (logZ)
+├── Layer1.lean              — six derivatives
+├── Layer2.lean              — domain regularity
+├── Layer3.lean              — doubly-unique theorem
+├── Layer4.lean              — consistency identities
+├── Aczel.lean               — Layer 5 Aczél fork
+├── Chentsov.lean            — Layer 5 Chentsov fork
+├── Aczel/                   — Layer 6 Aczél cascade
+│   ├── SextupleRole.lean    — wrap ces_sextuple_role
+│   ├── ProductionDuality.lean — inputDemand, Shephard bundled
+│   └── ArrowPratt.lean      — arrowPratt, arrowPrattCES
+└── Chentsov/                — Layer 6 Chentsov cascade
+    ├── FisherRao.lean       — matrix + Chentsov 1972 uniqueness
+    ├── CramerRao.lean       — Cramér-Rao bound (bundled)
+    └── Invariance.lean      — Fisher-Rao invariance (bundled)
 ```
 
 ## Architecture: five pre-fork tradition-neutral layers
@@ -87,6 +92,56 @@ Layer 7: Input-type fork                            DEEP FORK
 - All with zero custom axioms (`[propext, Classical.choice, Quot.sound]` only).
 - Full `lake build CESProofs.LogZExperiment.Master` passes.
 
+**Layer 6 (theorem cascades): MINIMUM-VIABLE COMPLETE**
+
+- 6 new files (3 Aczel/ + 3 Chentsov/), all zero custom axioms.
+- 14+ theorems across the two traditions.
+
+Aczél cascade:
+- `Aczel/SextupleRole.lean` — wraps the existing `ces_sextuple_role`
+  (QuadrupleRole.lean) under Layer-5-namespaced theorem names;
+  six individual role corollaries (a) superadditivity,
+  (b) correlation robustness, (c) strategic independence,
+  (d) network scaling, (e) statistical estimation (the
+  Aczél⇔Chentsov bridge), (f) phase ordering.
+- `Aczel/ProductionDuality.lean` — `inputDemand` definition
+  (Shephard algebraic form), primal-dual identity bundled,
+  Hölder-conjugate chaining from Layer 5, cost-function
+  homogeneity bundled.
+- `Aczel/ArrowPratt.lean` — univariate `arrowPratt = -u''/u'`,
+  CES multivariate `arrowPrattCES = economicCurvature / c`,
+  log-utility characteristic check.
+
+Chentsov cascade:
+- `Chentsov/FisherRao.lean` — matrix-valued `fisherRaoMatrix`
+  (diagonal in escort-coordinate for the 1-parameter family),
+  `IsChentsovInvariant` + `IsRiemannianMetric` predicates,
+  Chentsov 1972 uniqueness (hypothesis-bundled).
+- `Chentsov/CramerRao.lean` — `IsUnbiasedEstimator`,
+  `cramerRaoBound`, the bound theorem (hypothesis-bundled
+  matching `mechanism_efficiency_bound` Phase 3 pattern),
+  attainment at exponential family (bundled), scaling identity.
+- `Chentsov/Invariance.lean` — `IsDeterministicReduction`,
+  `IsSufficientForEscort`, Fisher-Rao monotonicity under
+  sufficient reductions (bundled), Chentsov invariance
+  capstone theorem.
+
+**Aczél cascade inventory** — existing axiom-clean CESProofs
+content not wrapped inside LogZExperiment/, living directly
+under `CESProofs.*` and already usable:
+- `CurvatureRoles/Superadditivity.lean` (Gap #3 resolved,
+  ~504 lines).
+- `CurvatureRoles/CorrelationRobust.lean` (Theorem 6).
+- `CurvatureRoles/Strategic.lean` + `GameTheory.lean`
+  (Theorem 7 + CES public goods game).
+- `CurvatureRoles/NetworkCES.lean` (14 results, ~900 lines).
+- `Hierarchy/DampingCancellation.lean` (dynamical integral,
+  commit `bb7a384`).
+- `Hierarchy/*.lean` (hierarchical CES activation structure).
+- `Potential/MacroApplications.lean` (6 macro theorems).
+- All axiom-clean; formal wrapping into `LogZExperiment.Aczel.*`
+  deferred as bookkeeping.
+
 **Layer 5 (first hard fork): COMPLETE**
 
 - `Aczel.lean` (~170 lines): 4 Aczél-side named objects
@@ -128,16 +183,14 @@ Canary findings:
 
 **Phase 3 (Layer 5, Chentsov side): DONE** — `Chentsov.lean` shipped.
 
-**Phase 4 (Layer 6): theorem cascades per tradition.** Heavy
-downstream content — on the Aczél side, production duality
-(Shephard's lemma, cost-function Legendre-conjugate theorems,
-the Sextuple Role connecting curvatureK to six specialized
-production properties), hierarchical CES, macroeconomic
-multiplier theory. On the Chentsov side, full exponential-family
-theory, Cramér-Rao bound as hypothesis-bundled statement,
-matrix-valued Fisher-Rao metric, geodesic distance computation,
-Chentsov's invariance theorem (monotonicity under Markov kernels,
-hypothesis-bundled).
+**Phase 4 (Layer 6): theorem cascades per tradition: DONE
+(minimum-viable).** 6 new files shipped. Aczél-side
+SextupleRole wrapper + ProductionDuality + ArrowPratt;
+Chentsov-side matrix FisherRao + CramerRao bound (bundled)
++ Invariance (bundled). Optional extensions deferred:
+formal wrappers for the 8 pre-existing Aczél cascade topics
+(damping, hierarchical, macro, etc.); full measure-theoretic
+Chentsov content; geodesic computation on Fisher-Rao.
 
 **Phase 5 (Layer 7): `SocialChoice.lean`.** Input-type fork
 to preference orderings; Debreu representation (preferences →
