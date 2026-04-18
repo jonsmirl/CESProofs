@@ -5,6 +5,33 @@
   Input-output decomposition, oscillation spectrum, rho-ordering
   of crises, slow-fast asymmetry, Minsky dynamics, and the Great
   Moderation as a damping phenomenon.
+
+  ### Deferred content (Phase 3d)
+
+  Results 55-62 (slow-fast asymptotics, canard trajectories,
+  delayed loss of stability in the coupled (ρ, T) system, and the
+  Great Moderation as a damping phenomenon) require singular
+  perturbation theory beyond Mathlib's current scope:
+
+  * **Fenichel's invariant-manifold theorem** (Fenichel 1979,
+    *J. Diff. Eq.* 31:53) — for slow-manifold reduction and
+    exchange-of-stability analysis.
+  * **Neishtadt's delayed-loss-of-stability theorem**
+    (Neishtadt 1987, *J. Appl. Math. Mech.* 51:586) — for canard
+    delay duration and exponentially-small corrections.
+  * **Geometric singular perturbation theory** (Jones 1995,
+    *Dynamical Systems, Lecture Notes in Math.* 1609:44) — for
+    the full multi-scale analysis on the (ρ, T) manifold.
+
+  None of these are formalized in Mathlib. A full promotion of
+  Results 55-62 would require either (a) upstream Mathlib work
+  on dynamical systems / slow-fast ODEs, or (b) hypothesis-bundling
+  the specific matching-ansatz results as assumptions at the
+  theorem level. Left axiomatized pending either route.
+
+  The scalar A3-iteration bridge in `Foundations.Emergence`
+  (`modeAfterL_semigroup`, `modeAfterL_eq_exp_decay`) captures
+  the fixed-point geometry but not the multi-scale ODE content.
 -/
 
 import CESProofs.Dynamics.Defs
