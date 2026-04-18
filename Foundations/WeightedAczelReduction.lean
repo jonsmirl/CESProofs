@@ -508,4 +508,41 @@ def AggFamily.hasSymExtension (family : AggFamily) {J : ℕ} (p : Fin J → ℕ)
     intro x
     rfl
 
+-- ============================================================
+-- Section 7: Phase 3c — `PowerMeanFamily.weightedOfFiber` explicit form
+-- ============================================================
+
+/-- **Explicit power-mean form.** For a `PowerMeanFamily` `pmf` and
+    multiplicity profile `p : Fin J → ℕ` with `N = ∑ p j`, the
+    fiber-weighted aggregator is the weighted ρ-power mean with weights
+    `p j / N`:
+    `pmf.weightedOfFiber p x = (∑ j, (p j / N) * x j ^ ρ) ^ (1 / ρ)`.
+
+    Proof: unfold `weightedOfFiber` and the uniform power-mean formula,
+    apply `Equiv.sum_comp` (change of variables) + `sum_replicate_sigma`
+    (combinatorial repeater identity), then algebra. -/
+theorem PowerMeanFamily.weightedOfFiber_eq_weighted_power_mean_form
+    (pmf : PowerMeanFamily) {J : ℕ} (p : Fin J → ℕ) (x : Fin J → ℝ) :
+    pmf.weightedOfFiber p x =
+      (∑ j, ((p j : ℝ) / (↑(∑ k, p k) : ℝ)) * (x j) ^ pmf.ρ) ^ (1 / pmf.ρ) := by
+  classical
+  have hcard : Fintype.card ((j : Fin J) × Fin (p j)) = ∑ j, p j := by
+    simp [Fintype.card_sigma, Fintype.card_fin]
+  let e : ((j : Fin J) × Fin (p j)) ≃ Fin (∑ j, p j) :=
+    (Fintype.equivFin _).trans (finCongr hcard)
+  -- Unfold pmf.weightedOfFiber and pmf.F = powerMean.
+  change ((1 / (↑(∑ j, p j) : ℝ)) *
+          ∑ k : Fin (∑ j, p j), (x (e.symm k).1) ^ pmf.ρ) ^ (1 / pmf.ρ) =
+         (∑ j, ((p j : ℝ) / (↑(∑ k, p k) : ℝ)) * (x j) ^ pmf.ρ) ^ (1 / pmf.ρ)
+  -- Change of variables along e.symm.
+  have hcov : ∑ k : Fin (∑ j, p j), (x (e.symm k).1) ^ pmf.ρ =
+              ∑ ij : (j : Fin J) × Fin (p j), (x ij.1) ^ pmf.ρ :=
+    e.symm.sum_comp (fun ij => (x ij.1) ^ pmf.ρ)
+  rw [hcov, sum_replicate_sigma p (fun j => (x j) ^ pmf.ρ)]
+  -- Goal: ((1/N) * ∑ j, p j * x j^ρ)^(1/ρ) = (∑ j, (p j / N) * x j^ρ)^(1/ρ)
+  congr 1
+  rw [Finset.mul_sum]
+  refine Finset.sum_congr rfl (fun j _ => ?_)
+  ring
+
 end

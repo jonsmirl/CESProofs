@@ -374,4 +374,52 @@ noncomputable def logZi {J : ℕ}
 theorem logZ_generates_network_CES_schema : True := by
   trivial
 
+-- ============================================================
+-- Section 10: Phase 3c — `generalized_aczel_network_via_pmf`
+-- (Zero-custom-axiom variant via `PowerMeanFamily`)
+-- ============================================================
+
+/-- **Generalized Aczél for Network Self-Maps via `PowerMeanFamily`**
+    (Phase 3c, closes `lit_multi_scale_rho_common` for this use case).
+
+    Given a `PowerMeanFamily` `pmf` and any network matrix `W`, the
+    network where each component `G i := pmf.weightedOfFiber (levelCount
+    (W i ·))` satisfies `IsNetworkCES` with common exponent `ρ = pmf.ρ`.
+
+    **Common ρ is immediate** — it's the family's fixed exponent.
+    `lit_multi_scale_rho_common` is not needed.
+
+    **Zero custom axioms.** Verified via `#print axioms
+    generalized_aczel_network_via_pmf`: depends only on `propext`,
+    `Classical.choice`, `Quot.sound` (Lean built-ins).
+
+    This theorem covers the common case where a network's components
+    share a single power-mean exponent (e.g., CES aggregation at a fixed
+    elasticity). For the general case — arbitrary weighted-symmetric
+    `G i`'s with possibly different ρ_i — the older
+    `generalized_aczel_network` (which uses `lit_multi_scale_rho_common`
+    to force common ρ) remains available. -/
+theorem generalized_aczel_network_via_pmf
+    {J : ℕ} (pmf : PowerMeanFamily) (W : NetworkMatrix J) :
+    IsNetworkCES
+      (fun i => pmf.weightedOfFiber (levelCount (fun j => W i j))) W := by
+  refine ⟨pmf.ρ, pmf.hρ,
+    fun i j => (levelCount (fun j' => W i j') j : ℝ) /
+               (↑(∑ k, levelCount (fun k' => W i k') k) : ℝ),
+    ?_, ?_⟩
+  · -- Level-set compatibility: W i j = W i k ⇒ levelCount j = levelCount k
+    --   ⇒ a i j = a i k (equal numerator over same denominator).
+    intro i j k hwjk
+    have hlc : levelCount (fun j' => W i j') j =
+               levelCount (fun j' => W i j') k :=
+      (levelCount_eq_iff (fun j' => W i j') j k).mpr hwjk
+    have : ((levelCount (fun j' => W i j') j : ℕ) : ℝ) =
+           ((levelCount (fun j' => W i j') k : ℕ) : ℝ) := by
+      exact_mod_cast hlc
+    simp only [this]
+  · -- Formula: G i x = (∑ j, a i j * x j^ρ)^(1/ρ).
+    intro i x
+    exact pmf.weightedOfFiber_eq_weighted_power_mean_form
+      (levelCount (fun j => W i j)) x
+
 end

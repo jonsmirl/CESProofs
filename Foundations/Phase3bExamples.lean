@@ -214,6 +214,28 @@ theorem G2_isNetworkCES : IsNetworkCES G2 W2 := by
   -- which is exactly what arithmeticMeanFamily.hasSymExtension provides.
   exact arithmeticMeanFamily.hasSymExtension (levelCount (fun j => W2 i j))
 
+-- ============================================================
+-- Section 6: Phase 3c — `PowerMeanFamily` path (zero custom axioms)
+-- ============================================================
+
+/-- A `PowerMeanFamily` with ρ = 1 — the arithmetic-mean case as a
+    power-mean family. -/
+noncomputable def pmf1 : PowerMeanFamily :=
+  ⟨1, one_ne_zero⟩
+
+/-- The Phase 3c variant of `G2`: each component is `pmf1.weightedOfFiber
+    (levelCount (W2 i ·))`. This goes through the power-mean-family
+    pipeline, which closes `lit_multi_scale_rho_common` for this case. -/
+noncomputable def G2pmf : NetworkAggFun 2 :=
+  fun i => pmf1.weightedOfFiber (levelCount (fun j => W2 i j))
+
+/-- **Phase 3c closure check.** Applying `generalized_aczel_network_via_pmf`
+    to a concrete `PowerMeanFamily` + network. Verified via `#print axioms`
+    to use NO custom `lit_*` axioms — Phase 3c eliminates all of them for
+    power-mean-family networks. -/
+theorem G2pmf_isNetworkCES : IsNetworkCES G2pmf W2 :=
+  generalized_aczel_network_via_pmf pmf1 W2
+
 end Phase3bExamples
 
 end

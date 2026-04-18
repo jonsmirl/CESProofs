@@ -63,4 +63,49 @@ structure AggFamily where
   /-- Homogeneity of degree one at every arity. -/
   homogeneous : ∀ n, IsHomogDegOne n (F n)
 
+-- ============================================================
+-- PowerMeanFamily — Phase 3c closure of `lit_multi_scale_rho_common`
+-- ============================================================
+
+/-- **Power-mean family**: an arity-indexed family where `F n` is the uniform
+    ρ-power mean at arity `n`, for a fixed exponent `ρ ≠ 0`.
+
+    Common ρ across arities is baked in by construction — no multi-scale
+    Kolmogorov-Nagumo argument needed. This is the lowest-overhead path to
+    a zero-custom-axiom `generalized_aczel_network` (via
+    `generalized_aczel_network_via_pmf` in `NetworkAczel.lean`), replacing
+    the `lit_multi_scale_rho_common` axiom for the common use case where
+    the network's components share a single power-mean exponent.
+
+    **Pre-existing caveat (ρ ≠ 1 on negative inputs).** `Real.rpow` on
+    negative bases with non-integer exponent evaluates to 0 by Mathlib
+    convention, which can break the codebase's universal-ℝ
+    `IsStrictlyIncreasing` / `IsHomogDegOne` predicates. Phase 3c does
+    not address this; for ρ = 1 (arithmetic mean) the issue does not
+    arise. For general ρ, `PowerMeanFamily` is most naturally used in
+    contexts where inputs are positive. -/
+structure PowerMeanFamily where
+  /-- The common exponent. -/
+  ρ : ℝ
+  /-- Nonzero. -/
+  hρ : ρ ≠ 0
+
+namespace PowerMeanFamily
+
+/-- The uniform ρ-power mean at arity `n`. -/
+noncomputable def F (pmf : PowerMeanFamily) (n : ℕ) : AggFun n :=
+  powerMean n pmf.ρ pmf.hρ
+
+/-- Fiber-weighted aggregator derived from a power-mean family at a
+    multiplicity profile `p : Fin J → ℕ`. Canonically: `pmf.F N` applied
+    to a fiber-expansion of the input, where `N = ∑ p j`. -/
+noncomputable def weightedOfFiber (pmf : PowerMeanFamily) {J : ℕ}
+    (p : Fin J → ℕ) : AggFun J :=
+  let e : ((j : Fin J) × Fin (p j)) ≃ Fin (∑ j, p j) :=
+    (Fintype.equivFin _).trans
+      (finCongr (by simp [Fintype.card_sigma, Fintype.card_fin]))
+  fun x => pmf.F (∑ j, p j) (fun k => x (e.symm k).1)
+
+end PowerMeanFamily
+
 end
