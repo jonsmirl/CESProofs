@@ -23,9 +23,8 @@
     function represents a preference relation.
   - `debreuRepresentation_bundled` — the Debreu representation
     theorem stated hypothesis-bundled.
-  - `utility_shareFunction_softmax` — the bridge to TenWayIdentity's
-    11th view: utility functions + softmax produce shareFunction
-    instances, reducing social-choice aggregation to log-Z calculus.
+  - `softmaxOverUtilities` — softmax aggregation over utility
+    values at temperature T.
 -/
 
 import CESProofs.LogZExperiment.Master
@@ -86,48 +85,14 @@ theorem debreuRepresentation_bundled
     ∃ u : α → ℝ, IsUtilityRepresentation P u := h_debreu
 
 -- ============================================================
--- Bridge to TenWayIdentity: utility + softmax = shareFunction
+-- Softmax aggregation over utilities
 -- ============================================================
 
-/-- **`softmaxOverUtilities`**: given N agents with utility functions
-    `u_i : α → ℝ` evaluated at a specific alternative `a : α`, and
-    an inverse-temperature / choice-sharpness parameter `T : ℝ`,
-    the softmax aggregation gives the choice probability of
-    alternative `j` as the `shareFunction` over `exp(u_j(a)/T)`.
-
-    This connects preference-based social choice to the log-Z
-    universal share function calculus: preferences → utility (Debreu)
-    → softmax → shareFunction → escort = Layer 1 escort = logZ
-    first derivative.
-
-    Direct reduction to TenWayIdentity's `expectedUtilityAllocation`
-    (the 11th view): `softmaxOverUtilities u_vals T j` at preference
-    profile evaluation equals `expectedUtilityAllocation id T u_vals j`. -/
+/-- Softmax aggregation: given utility values `uVals` and temperature
+    `T`, the choice probability of alternative `j` is
+    `exp(uVals j / T) / Σ_k exp(uVals k / T)`. -/
 def softmaxOverUtilities {J : ℕ} (uVals : Fin J → ℝ) (T : ℝ) (j : Fin J) : ℝ :=
   Real.exp (uVals j / T) / ∑ k : Fin J, Real.exp (uVals k / T)
-
-/-- **The softmax aggregation IS a shareFunction** (the Ten-Way
-    Identity reduction). Direct `rfl` since both sides are the
-    same algebraic form. -/
-theorem softmaxOverUtilities_is_shareFunction {J : ℕ}
-    (uVals : Fin J → ℝ) (T : ℝ) (j : Fin J) :
-    softmaxOverUtilities uVals T j =
-    shareFunction (fun k => Real.exp (uVals k / T)) j := rfl
-
-/-- **The softmax aggregation IS `expectedUtilityAllocation` at linear
-    utility**. Direct `rfl` since preference → utility produces
-    numerical utility values that then feed softmax, which equals
-    `expectedUtilityAllocation (fun e => e) T uVals j` (identity
-    preprocessing in the Ten-Way 11th view sense).
-
-    Bridge to Layer 5: softmaxOverUtilities factors through
-    `expectedUtilityAllocation` (TenWayIdentity's 11th view).
-    Since the 11th view is a `shareFunction` instance, so is
-    softmaxOverUtilities. -/
-theorem softmaxOverUtilities_is_expectedUtility {J : ℕ}
-    (uVals : Fin J → ℝ) (T : ℝ) (j : Fin J) :
-    softmaxOverUtilities uVals T j =
-    expectedUtilityAllocation (fun e => e) T uVals j := rfl
 
 end Preferences
 end LogZExperiment

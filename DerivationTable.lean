@@ -213,24 +213,17 @@ end SextupleRole
 -- ════════════════════════════════════════════════════════════════
 -- SECTION 4: Ten Views — Universal Share Function
 -- ════════════════════════════════════════════════════════════════
--- The CES share function s_j = x_j^ρ / Σ x_k^ρ unifies 10 economic fields.
+-- shareFunction primitive (w_j / Σ w_k) and its universal properties.
+-- The "ten-way identity" formerly listed here is deleted per the
+-- 2026-04-23 framework rework — the shared algebraic form is a
+-- common maximum-entropy result across fields, not a structural
+-- unification.
 
-section TenViews
+section ShareFunction
 
-#check @escortDistribution_is_shareFunction  -- Share = escort distribution
-#check @factorShare_is_shareFunction         -- Share = factor share
-#check @contestShare_is_shareFunction        -- Share = contest share
-#check @logitProbability_is_shareFunction    -- Share = logit choice probability
-#check @gibbsProb_is_shareFunction           -- Share = Gibbs probability
+#check @shareFunction
 
--- TenWayIdentity.lean: shareFunction, shareFunction_pos, shareFunction_sum,
---   shareFunction_symmetric_uniform, shareFunction_mono, shareFunction_homog,
---   shareFunction_eq_tradeShare, shareFunction_eq_portfolioWeight,
---   shareFunction_eq_votingWeight, shareFunction_eq_matchProb,
---   shareFunction_eq_spatialShare, kl_from_uniform, kl_nonneg,
---   kl_zero_iff_uniform, diversity_max_at_uniform, diversity_decreasing_in_concentration
-
-end TenViews
+end ShareFunction
 
 -- ════════════════════════════════════════════════════════════════
 -- SECTION 5: General Hessian and Isoquant Geometry
