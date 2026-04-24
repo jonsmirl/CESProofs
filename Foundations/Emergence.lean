@@ -320,35 +320,16 @@ theorem modeAfterL_tendsto_continuous_flow
   simp_rw [h_eq]
   exact tendsto_const_nhds
 
-/-- **Symmetric ANOVA Mode Bridge** (Hoeffding 1948; Efron-Stein 1981).
-    [External axiom — formally reducible but omitted for tractability]
-
-    For a symmetric function f : ℝ^J → ℝ, the ANOVA/Hoeffding decomposition
-    yields orthogonal symmetric harmonics h_m such that:
-
-    f(x) = M_ρ(x) + Σ_{m≥3} a_m · h_m(x)
-
-    where h_m are orthogonal symmetric harmonics and a_m are mode amplitudes.
-    The contraction of a_m under aggregation follows from the multinomial
-    structure of power sums.
-
-    **Why axiomatized.** The decomposition is formally reducible to:
-    (1) Hoeffding's ANOVA decomposition for symmetric functions
-        (Hoeffding 1948, "A class of statistics with asymptotically
-        normal distribution", *Ann. Math. Stat.* 19:293-325), and
-    (2) multinomial power sum identities for the contraction rates.
-    The specialized case (power sum polynomials on symmetric inputs)
-    is tractable in principle, but Lean's elaborator times out on the
-    index arithmetic for nested Fin partitions when J is a variable.
-    The mode contraction algebra downstream (18 theorems in
-    RenormalizationGroup.lean) is fully proved; only this bridge
-    connecting modes to arbitrary functions is axiomatized. -/
-axiom lit_symmetric_anova_mode_bridge (J : ℕ) (f : AggFun J) (ρ : ℝ) (hρ : ρ ≠ 0) :
-    ∃ (a : ℕ → ℝ), ∀ (k L : ℕ), 2 ≤ k → ∀ (m : ℕ), 3 ≤ m →
-    -- After L layers, the m-th mode amplitude of R_k^L(f) is modeAfterL k m L (a m)
-    -- The bound |a_m(L)| ≤ |a_m(0)| · (modeRate k m)^L follows from the
-    -- proved mode_geometric_decay theorem once this bridge is established.
-    True
+-- Historical note: an axiom `lit_symmetric_anova_mode_bridge` was
+-- defined here. Its stated conclusion, after stripping the
+-- universal and existential quantifiers, was literally `True` —
+-- the actual mode-amplitude bound content was described in comments
+-- but never formalized, and the Lean statement reduced to a vacuous
+-- `∃ a, ∀ …, True` that is provable without any axiom. No code
+-- invoked it; the only references were documentation entries in
+-- `DerivationTable.lean`. Deleted 2026-04-23 per axiom audit.
+-- If the actual Hoeffding/Efron-Stein bound is ever needed, it
+-- should be stated as a real theorem with a real conclusion.
 
 -- ============================================================
 -- Supporting Lemma for Theorem 6: Sum of squares bound
